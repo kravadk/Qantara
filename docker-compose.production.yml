@@ -1,0 +1,81 @@
+﻿services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ${QANTARA_ENV_FILE:-./.env.production}
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      QANTARA_DB_PATH: /app/data/qantara.sqlite
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    volumes:
+      - qantara_sqlite:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./qie-app
+      dockerfile: Dockerfile
+      args:
+        VITE_QANTARA_BACKEND_URL: ${VITE_QANTARA_BACKEND_URL}
+        VITE_QANTARA_ADDRESS: ${VITE_QANTARA_ADDRESS}
+        VITE_QANTARA_MULTIPAY_ADDRESS: ${VITE_QANTARA_MULTIPAY_ADDRESS}
+        VITE_QUSDC_ADDRESS: ${VITE_QUSDC_ADDRESS}
+        VITE_MILESTONE_ESCROW_ADDRESS: ${VITE_MILESTONE_ESCROW_ADDRESS:-}
+        VITE_RECURRING_SCHEDULER_ADDRESS: ${VITE_RECURRING_SCHEDULER_ADDRESS:-}
+        VITE_BATCH_PAYOUT_ADDRESS: ${VITE_BATCH_PAYOUT_ADDRESS:-}
+        VITE_QANTARA_SUPPORTS_EIP3009: ${VITE_QANTARA_SUPPORTS_EIP3009:-false}
+        VITE_QUSDC_EIP3009_VERSION: ${VITE_QUSDC_EIP3009_VERSION:-1}
+        VITE_QANTARA_CHAT_ADDRESS: ${VITE_QANTARA_CHAT_ADDRESS:-}
+        VITE_QANTARA_SPLITS_ADDRESS: ${VITE_QANTARA_SPLITS_ADDRESS:-}
+        VITE_QANTARA_SUBSCRIPTION_V2_ADDRESS: ${VITE_QANTARA_SUBSCRIPTION_V2_ADDRESS:-}
+        VITE_QANTARA_GAS_RELAY_ADDRESS: ${VITE_QANTARA_GAS_RELAY_ADDRESS:-}
+    ports:
+      - "${FRONTEND_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  tg-bot:
+    profiles: ["telegram"]
+    build:
+      context: ./tg-bot
+      dockerfile: Dockerfile
+    env_file:
+      - ${QANTARA_ENV_FILE:-./.env.production}
+    environment:
+      NODE_ENV: production
+      QANTARA_BACKEND_URL: ${QANTARA_BACKEND_URL}
+      QANTARA_BASE_URL: ${QANTARA_BASE_URL}
+      BOT_WEBHOOK_PORT: ${BOT_WEBHOOK_PORT:-8081}
+    ports:
+      - "${BOT_WEBHOOK_PORT:-8081}:${BOT_WEBHOOK_PORT:-8081}"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "const port=Number(process.env.BOT_WEBHOOK_PORT||0); if(!port) process.exit(0); fetch('http://127.0.0.1:'+port+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  qantara_sqlite:

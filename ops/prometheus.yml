@@ -1,0 +1,17 @@
+# Prometheus scrape config for Qantara backend.
+# Point `targets` at the backend host:port exposing /v1/metrics.
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+rule_files:
+  - alerts.rules.yml
+
+scrape_configs:
+  - job_name: qantara-backend
+    metrics_path: /v1/metrics
+    static_configs:
+      - targets: ['backend:4000']
+        labels:
+          service: qantara-backend
+          env: production

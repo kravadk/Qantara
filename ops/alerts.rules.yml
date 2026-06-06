@@ -1,0 +1,60 @@
+﻿# Prometheus alerting rules for Qantara, derived from the gauges exposed at
+# /v1/metrics by backend/src/lib/operations.ts and the request metrics middleware.
+groups:
+  - name: qantara
+    rules:
+      - alert: BackendDown
+        expr: qantara_backend_up != 1 or absent(qantara_backend_up)
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: Qantara backend is not reporting up
+
+      - alert: OperationalUnhealthy
+        expr: qantara_operational_healthy != 1
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: Operational health gauge is not healthy
+
+      - alert: RpcDown
+        expr: qantara_rpc_up != 1
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: QIE RPC is unreachable from the backend
+
+      - alert: IndexerLagging
+        expr: qantara_indexer_lag_blocks > 50
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Chain indexer lag exceeds 50 blocks
+
+      - alert: IndexerStale
+        expr: qantara_indexer_cursor_stale_seconds > 120
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: Chain indexer cursor is stale
+
+      - alert: WebhookFailuresHigh
+        expr: increase(qantara_webhook_failed_deliveries[1h]) > 10
+        for: 0m
+        labels: { severity: warning }
+        annotations:
+          summary: Webhook delivery failures are accumulating
+
+      - alert: HttpErrorRateHigh
+        expr: sum(rate(qantara_http_errors_total[5m])) / sum(rate(qantara_http_requests_total[5m])) > 0.05
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: 5xx error rate above 5%
+
+      - alert: HttpLatencyP95High
+        expr: histogram_quantile(0.95, sum by (le) (rate(qantara_http_request_duration_seconds_bucket[5m]))) > 1
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: p95 request latency above 1s

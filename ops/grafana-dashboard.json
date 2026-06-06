@@ -1,0 +1,96 @@
+﻿{
+  "title": "Qantara — Backend",
+  "uid": "qantara-backend",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Backend up",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [{ "expr": "qantara_backend_up", "refId": "A" }]
+    },
+    {
+      "id": 2,
+      "title": "Operational healthy",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [{ "expr": "qantara_operational_healthy", "refId": "A" }]
+    },
+    {
+      "id": 3,
+      "title": "Indexer lag (blocks)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [{ "expr": "qantara_indexer_lag_blocks", "refId": "A" }]
+    },
+    {
+      "id": 4,
+      "title": "RPC block number",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [{ "expr": "qantara_rpc_block_number", "refId": "A" }]
+    },
+    {
+      "id": 5,
+      "title": "Request rate by status",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum by (status) (rate(qantara_http_requests_total[5m]))", "legendFormat": "{{status}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "5xx error ratio",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(rate(qantara_http_errors_total[5m])) / clamp_min(sum(rate(qantara_http_requests_total[5m])), 1)", "legendFormat": "error ratio", "refId": "A" }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Request latency p50/p95/p99",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum by (le) (rate(qantara_http_request_duration_seconds_bucket[5m])))", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(qantara_http_request_duration_seconds_bucket[5m])))", "legendFormat": "p95", "refId": "B" },
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(qantara_http_request_duration_seconds_bucket[5m])))", "legendFormat": "p99", "refId": "C" }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Webhook failed deliveries",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "qantara_webhook_failed_deliveries", "legendFormat": "failed", "refId": "A" },
+        { "expr": "qantara_webhook_due_retries", "legendFormat": "due retries", "refId": "B" }
+      ]
+    }
+  ]
+}

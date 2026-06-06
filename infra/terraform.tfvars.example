@@ -1,0 +1,8 @@
+﻿# Copy to terraform.tfvars and fill with real values. Never commit terraform.tfvars.
+vercel_api_token         = ""
+railway_token            = ""
+project_name             = "qantara"
+frontend_domain          = "qantara.app"
+backend_domain           = "api.qantara.app"
+vite_qantara_backend_url = "https://api.qantara.app"
+github_repo              = "your-org/qantara"

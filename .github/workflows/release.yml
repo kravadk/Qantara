@@ -1,0 +1,200 @@
+﻿name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version without the leading v
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Package release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Resolve release version
+        id: version
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          if ! printf "%s" "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "Invalid release version: $version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Validate package versions
+        run: |
+          set -euo pipefail
+          release="${{ steps.version.outputs.version }}"
+          backend="$(node -p "require('./backend/package.json').version")"
+          app="$(node -p "require('./qie-app/package.json').version")"
+          contracts="$(node -p "require('./contracts/package.json').version")"
+          bot="$(node -p "require('./tg-bot/package.json').version")"
+          sdk="$(node -p "require('./packages/qantara-sdk/package.json').version")"
+          for pair in "backend:$backend" "qie-app:$app" "contracts:$contracts" "tg-bot:$bot"; do
+            name="${pair%%:*}"
+            value="${pair#*:}"
+            if [ "$value" != "$release" ]; then
+              echo "$name version $value does not match release $release"
+              exit 1
+            fi
+          done
+          if [ "$sdk" != "$release" ] && [ "$sdk" != "$release-beta.1" ]; then
+            echo "SDK version $sdk does not match release $release or $release-beta.1"
+            exit 1
+          fi
+
+      - name: Install backend
+        working-directory: backend
+        run: npm ci
+
+      - name: Build backend
+        working-directory: backend
+        run: npm run lint && npm test && npm run build
+
+      - name: Install frontend
+        working-directory: qie-app
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: qie-app
+        run: npm run lint && npm test && npm run build
+
+      - name: Install contracts
+        working-directory: contracts
+        run: npm ci
+
+      - name: Build contracts
+        working-directory: contracts
+        run: npm run build && npm test && node --check scripts/check-deploy-hardening.cjs && node --check scripts/regen-verified.cjs && node --check scripts/check-verified-manifest.cjs && node scripts/check-deploy-hardening.cjs && node scripts/regen-verified.cjs && node scripts/check-verified-manifest.cjs
+
+      - name: Install SDK
+        working-directory: packages/qantara-sdk
+        run: npm ci
+
+      - name: Build SDK package
+        working-directory: packages/qantara-sdk
+        run: mkdir -p ../../release && npm run lint && npm test && npm pack --pack-destination ../../release
+
+      - name: Check Telegram bot syntax
+        working-directory: tg-bot
+        run: npm install && node --check index.js
+
+      - name: Run production hygiene guardrails
+        run: node --check scripts/production-hygiene.mjs && node scripts/production-hygiene.mjs
+
+      - name: Build release bundles
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          mkdir -p release/staging/backend release/staging/frontend release/staging/contracts release/staging/contracts/contracts/v4 release/staging/contracts/deployments release/staging/docs
+
+          cp -R backend/dist release/staging/backend/dist
+          cp backend/package.json backend/package-lock.json backend/Dockerfile backend/railway.toml release/staging/backend/
+
+          cp -R qie-app/dist release/staging/frontend/dist
+          cp qie-app/package.json qie-app/package-lock.json qie-app/Dockerfile qie-app/nginx.conf release/staging/frontend/
+
+          cp contracts/package.json contracts/package-lock.json contracts/hardhat.config.ts contracts/README.md contracts/VERIFY.md release/staging/contracts/
+          cp contracts/contracts/Qantara.sol contracts/contracts/QantaraMultiPay.sol contracts/contracts/MilestoneEscrow.sol contracts/contracts/RecurringScheduler.sol contracts/contracts/BatchPayout.sol release/staging/contracts/contracts/
+          cp contracts/contracts/v4/QantaraChat.sol contracts/contracts/v4/QantaraSplits.sol contracts/contracts/v4/QantaraSubscriptionV2.sol contracts/contracts/v4/QantaraGasRelay.sol release/staging/contracts/contracts/v4/
+          cp contracts/deployments/qieMainnet.json contracts/deployments/qieMainnet.v15.json contracts/deployments/qieMainnet.v4.json contracts/deployments/qieMainnet.verified.json release/staging/contracts/deployments/
+
+          cp README.md PLAN.md IMPLEMENTATION_PLAN.md SECURITY.md DEPLOYMENT.md OPERATIONS_RUNBOOK.md RELEASE.md LICENSE docker-compose.production.yml .env.production.example release/staging/docs/
+
+          tar -czf "release/qantara-backend-$version.tar.gz" -C release/staging/backend .
+          tar -czf "release/qantara-frontend-$version.tar.gz" -C release/staging/frontend .
+          tar -czf "release/qantara-contracts-$version.tar.gz" -C release/staging/contracts .
+          tar -czf "release/qantara-docs-$version.tar.gz" -C release/staging/docs .
+
+      - name: Validate release bundle contents
+        run: |
+          set -euo pipefail
+          for bundle in release/*.tar.gz; do
+            tar -tzf "$bundle" > /tmp/qie-qantara-bundle-list.txt
+            deny_contract_paths='(^|/)(test|cache|artifacts|typechain-types|coverage|node_modules|backups)(/|$)|(^|/)\.env$|(^|/)\.env\.(production|staging|dev)$|\.sqlite(\.json)?$|pre-restore|hardhat\.json|QUSDC''TestToken|PermitToken|FeeOnTransferToken|AuthorizationToken|RevertingReceiver'
+            if grep -Eiq "$deny_contract_paths" /tmp/qie-qantara-bundle-list.txt; then
+              echo "Release bundle contains non-production contract artifact: $bundle"
+              cat /tmp/qie-qantara-bundle-list.txt
+              exit 1
+            fi
+          done
+
+      - name: Create release manifest and checksums
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+          const version = process.env.RELEASE_VERSION;
+          const files = readdirSync('release')
+            .filter((name) => {
+              const path = `release/${name}`;
+              return statSync(path).isFile() && name !== 'release-manifest.json' && name !== 'SHA256SUMS.txt';
+            })
+            .map((name) => {
+              const path = `release/${name}`;
+              return {
+                name,
+                bytes: statSync(path).size,
+                sha256: createHash('sha256').update(readFileSync(path)).digest('hex'),
+              };
+            });
+          writeFileSync('release/release-manifest.json', `${JSON.stringify({
+            name: 'qie-qantara',
+            version,
+            createdAt: Math.floor(Date.now() / 1000),
+            files,
+          }, null, 2)}\n`);
+          NODE
+          (
+            cd release
+            find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -printf '%P\0' \
+              | sort -z \
+              | xargs -0 sha256sum > SHA256SUMS.txt
+          )
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: qie-qantara-${{ steps.version.outputs.version }}
+          path: |
+            release/*.tar.gz
+            release/*.tgz
+            release/SHA256SUMS.txt
+            release/release-manifest.json
+
+      - name: Publish GitHub release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Qantara ${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: |
+            release/*.tar.gz
+            release/*.tgz
+            release/SHA256SUMS.txt
+            release/release-manifest.json

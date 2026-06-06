@@ -1,0 +1,58 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Which services to deploy
+        type: choice
+        options: [all, backend, frontend]
+        default: all
+  push:
+    tags: ['v*.*.*']
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  backend:
+    name: Deploy backend (Railway)
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.target == 'all' || inputs.target == 'backend' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy (skips cleanly without RAILWAY_TOKEN)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE: ${{ vars.RAILWAY_SERVICE }}
+        run: |
+          set -euo pipefail
+          if [ -z "${RAILWAY_TOKEN:-}" ]; then
+            echo "RAILWAY_TOKEN not set — skipping live deploy (deploy-ready, not wired)."
+            exit 0
+          fi
+          npx -y @railway/cli up --service "${RAILWAY_SERVICE:-backend}" --detach
+
+  frontend:
+    name: Deploy frontend (Vercel)
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.target == 'all' || inputs.target == 'frontend' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: qie-app
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy (skips cleanly without VERCEL_TOKEN)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VERCEL_TOKEN:-}" ]; then
+            echo "VERCEL_TOKEN not set — skipping live deploy (deploy-ready, not wired)."
+            exit 0
+          fi
+          npm i -g vercel@latest
+          vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+          vercel build --prod --token "$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"

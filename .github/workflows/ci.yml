@@ -1,0 +1,298 @@
+﻿name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  contracts:
+    name: Contracts
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: contracts/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm run coverage
+      - name: Upload contracts coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contracts-coverage
+          path: contracts/coverage
+          if-no-files-found: ignore
+      - run: npm run audit:static
+      - run: node --check scripts/check-deploy-hardening.cjs
+      - run: node --check scripts/regen-verified.cjs
+      - run: node --check scripts/check-verified-manifest.cjs
+      - run: node scripts/check-deploy-hardening.cjs
+      - run: node scripts/regen-verified.cjs --check
+      - run: node scripts/check-verified-manifest.cjs
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:coverage
+      - run: npm run build
+
+  qie-app:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: qie-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: qie-app/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:coverage
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e:ci
+      - name: Upload frontend coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: qie-app/coverage
+          if-no-files-found: ignore
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: qie-app/playwright-report
+          if-no-files-found: ignore
+
+  sdk:
+    name: SDK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/qantara-sdk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: packages/qantara-sdk/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+  tg-bot:
+    name: Telegram bot syntax
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tg-bot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install
+      - run: node --check index.js
+
+  deployment:
+    name: Deployment templates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate Docker Compose config
+        env:
+          QANTARA_ENV_FILE: .env.production.example
+        run: docker compose --env-file .env.production.example -f docker-compose.production.yml config
+      - name: Validate SQLite backup and restore scripts
+        run: |
+          set -euo pipefail
+          node --check scripts/production-hygiene.mjs
+          node --check scripts/sqlite-backup.mjs
+          node --check scripts/sqlite-restore.mjs
+          tmp="$(mktemp -d)"
+          node --input-type=module - "$tmp/qantara.sqlite" <<'NODE'
+          import { DatabaseSync } from 'node:sqlite';
+          const db = new DatabaseSync(process.argv[2]);
+          db.exec("CREATE TABLE invoices(id TEXT PRIMARY KEY, amount TEXT); INSERT INTO invoices VALUES ('inv_1', '10');");
+          db.close();
+          NODE
+          node scripts/sqlite-backup.mjs --db "$tmp/qantara.sqlite" --out "$tmp/backups"
+          backup="$(find "$tmp/backups" -name '*.sqlite' | head -n 1)"
+          test -n "$backup"
+          node scripts/sqlite-restore.mjs --from "$backup" --db "$tmp/qantara.sqlite" --yes --pre-restore-out "$tmp/backups"
+          test -f "$backup.json"
+          test -n "$(find "$tmp/backups" -name 'pre-restore-*.sqlite' | head -n 1)"
+
+  iac:
+    name: Infrastructure templates
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false
+      - run: terraform validate
+
+  secrets-scan:
+    name: Secrets scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Forbid committed secrets
+        run: |
+          set -euo pipefail
+          env_files="$(git ls-files | grep -E '(^|/)\.env(\.|$)' | grep -Ev '\.example$' || true)"
+          if [ -n "$env_files" ]; then
+            printf "%s\n" "$env_files"
+            echo "Committed environment file detected. Secrets must never be in the tree."
+            exit 1
+          fi
+          if git grep -E '(sk_live_[a-f0-9]{32,}|whsec_[a-f0-9]{32,}|PRIVATE_KEY=0x[a-f0-9]{64})' -- . ':(exclude)*.example' ':(exclude)*.md'; then
+            echo "Live-looking secret found in committed source."
+            exit 1
+          fi
+          echo "OK - no committed secrets."
+
+  source-hygiene:
+    name: Source hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+      - name: Forbid event-specific product markers
+        run: |
+          set -euo pipefail
+          pattern="event-specific "'de'"mo page|competition-only page|evaluation-only page"
+          if rg -n "$pattern" -S \
+            -g '!**/node_modules/**' \
+            -g '!qie-app/dist/**' \
+            -g '!contracts/artifacts/**' \
+            -g '!contracts/cache/**' \
+            -g '!contracts/coverage/**' \
+            -g '!contracts/node_modules/**' \
+            -g '!contracts/typechain-types/**' \
+            qie-app/src backend/src tg-bot packages/qantara-sdk/src packages/qantara-sdk/README.md contracts/scripts \
+            README.md PLAN.md IMPLEMENTATION_PLAN.md SECURITY.md OPERATIONS_RUNBOOK.md DEPLOYMENT.md \
+            RELEASE.md docker-compose.production.yml .env.production.example tg-bot/.env.example contracts/README.md contracts/VERIFY.md; then
+            echo "Event-specific product marker found."
+            exit 1
+          fi
+      - name: Forbid unverified runtime payment paths
+        run: |
+          set -euo pipefail
+          replacement_contract_marker="test replacement "'contract'
+          unverified_state_marker="unverified paid "'state'
+          client_tx_marker="client-created tx "'hash'
+          sample_paid_marker="sample "'paid'
+          paid_marker_2="de"'mo '"pa"'id'
+          banned_secret_placeholder="change[_-]?"'me'
+          ephemeral_override_marker="ephemeral payment "'override'
+          pattern="${replacement_contract_marker}|${unverified_state_marker}|${client_tx_marker}|${sample_paid_marker}|${paid_marker_2}|${banned_secret_placeholder}|${ephemeral_override_marker}"
+          hits="$(rg -n "$pattern" -S \
+            qie-app/src backend/src tg-bot packages/qantara-sdk/src packages/qantara-sdk/README.md scripts \
+            README.md PLAN.md IMPLEMENTATION_PLAN.md SECURITY.md OPERATIONS_RUNBOOK.md DEPLOYMENT.md \
+            RELEASE.md docker-compose.production.yml .env.production.example tg-bot/.env.example || true)"
+          allowed="$(printf "%s\n" "$hits" | rg -v "qie-app/src/lib/sourceHygiene.test.ts|backend/src/app.test.ts" || true)"
+          if [ -n "$allowed" ]; then
+            printf "%s\n" "$allowed"
+            echo "Unverified runtime payment marker found."
+            exit 1
+          fi
+      - name: Run production hygiene guardrails
+        run: node scripts/production-hygiene.mjs
+
+  security-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [backend, qie-app, packages/qantara-sdk, contracts]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Audit production dependencies (fail on critical)
+        working-directory: ${{ matrix.dir }}
+        run: npm audit --omit=dev --audit-level=critical
+
+  dependency-review:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: critical
+
+  trivy:
+    name: Trivy repository scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy fs/config/secret scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,config
+          ignore-unfixed: true
+          severity: CRITICAL
+          exit-code: "1"
+          format: sarif
+          output: trivy-results.sarif
+      - name: Upload Trivy SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
