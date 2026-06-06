@@ -1,0 +1,28 @@
+{
+  "name": "qantara-contracts",
+  "version": "1.0.0-rc.1",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test",
+    "coverage": "hardhat coverage",
+    "lint:sol": "solhint \"contracts/**/*.sol\"",
+    "audit:static": "node scripts/static-analysis-gated.cjs",
+    "deploy:qie": "hardhat run scripts/deploy.ts --network qieMainnet",
+    "deploy:receipt-registry": "hardhat run scripts/deploy-receipt-registry.ts --network qieMainnet",
+    "deploy:hardhat": "hardhat run scripts/deploy.ts --network hardhat",
+    "verify": "hardhat verify --network qieMainnet"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "5.0.2",
+    "@types/node": "^20.11.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.10",
+    "solhint": "^5.0.3",
+    "solidity-coverage": "^0.8.17",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
