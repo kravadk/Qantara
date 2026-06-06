@@ -24,10 +24,10 @@
   /* QIE Dark Theme � palette pulled from qiewallet.me + qie.digital
      Signature: magenta-pink (#F02C78) + purple (#7e22ce) + orange accent.
      Background tinted purple-navy. */
-  --bg-base: #0d0a18;
-  --surface-1: #1a1525;
-  --surface-2: #241c34;
-  --surface-3: #2e2542;
+  --bg-base: #0a0712;
+  --surface-1: #221a31;
+  --surface-2: #2c2240;
+  --surface-3: #382c50;
   --accent-primary: #F02C78;       /* QIE signature magenta-pink */
   --accent-secondary: #7e22ce;     /* QIE deep purple */
   --accent-orange: #f97316;        /* QIE orange accent (gradient flourishes) */
@@ -36,8 +36,8 @@
   --text-secondary: #c4b8d9;       /* lavender-tinted body text */
   --text-muted: #898CA9;
   --text-dim: #42444d;
-  --border-default: rgba(240, 44, 120, 0.08);
-  --border-active: rgba(240, 44, 120, 0.35);
+  --border-default: rgba(200, 188, 224, 0.16);
+  --border-active: rgba(240, 44, 120, 0.45);
   --font-family-primary: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* QIE signature gradients */
@@ -344,9 +344,8 @@
   /* Ambient mesh background (Hero / Dashboard hero) */
   .qie-mesh-bg {
     background-image:
-      radial-gradient(circle at 18% 25%, rgba(126, 34, 206, 0.35) 0%, transparent 45%),
-      radial-gradient(circle at 82% 30%, rgba(240, 44, 120, 0.25) 0%, transparent 50%),
-      radial-gradient(circle at 50% 90%, rgba(249, 115, 22, 0.18) 0%, transparent 55%);
+      radial-gradient(circle at 20% 20%, rgba(126, 34, 206, 0.16) 0%, transparent 50%),
+      radial-gradient(circle at 85% 28%, rgba(240, 44, 120, 0.12) 0%, transparent 55%);
   }
 
   /* Soft card border with QIE pink hover */
