@@ -1,0 +1,78 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "back": "Back",
+    "next": "Next",
+    "confirm": "Confirm",
+    "send": "Send",
+    "close": "Close",
+    "retry": "Retry",
+    "open": "Open"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "new_invoice": "New invoice",
+    "splits": "Splits",
+    "streams": "Streams",
+    "batch": "Batch payout",
+    "escrow": "Escrow",
+    "subscription": "Subscription",
+    "explorer": "Explorer",
+    "inbox": "Inbox",
+    "developer": "Developer",
+    "settings": "Settings",
+    "agent": "AI Copilot",
+    "onramp": "Buy QIE",
+    "sdk": "SDK"
+  },
+  "auth": {
+    "sign_in": "Sign in with wallet",
+    "sign_in_pending": "Signing…",
+    "sign_in_verifying": "Verifying…",
+    "sign_out": "Sign out",
+    "wallet_not_connected": "Connect a wallet first"
+  },
+  "invoice": {
+    "status_created": "Created",
+    "status_paid": "Paid",
+    "status_cancelled": "Cancelled",
+    "status_refunded": "Refunded",
+    "status_paused": "Paused",
+    "amount": "Amount",
+    "recipient": "Recipient",
+    "memo": "Memo",
+    "expires_at": "Expires",
+    "pay_now": "Pay now",
+    "pay_gasless": "Pay (sponsored gas)",
+    "share_link": "Share link",
+    "view_on_explorer": "View on explorer"
+  },
+  "chat": {
+    "send": "Send",
+    "send_onchain": "Send on-chain",
+    "placeholder": "Type a message…",
+    "gas_warning": "Each message ≈ $0.0001 in gas — real talk, real chain.",
+    "empty": "No messages yet."
+  },
+  "copilot": {
+    "title": "AI checkout copilot",
+    "ask_placeholder": "Ask anything about this invoice…",
+    "ai_may_be_wrong": "AI may be wrong — always verify on chain.",
+    "presets": {
+      "what_is_this": "What is this invoice?",
+      "how_to_pay": "How do I pay?",
+      "is_it_safe": "Is this safe?",
+      "what_is_permit": "What is permit?"
+    }
+  },
+  "settings": {
+    "language": "Language",
+    "lang_en": "English",
+    "lang_uk": "Українська"
+  }
+}

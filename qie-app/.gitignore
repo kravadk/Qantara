@@ -1,0 +1,28 @@
+node_modules/
+build/
+!src/pages/app/build/
+!src/pages/app/build/**
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Hardhat
+artifacts/
+cache/
+typechain-types/
+
+# Temp files
+fhe_abi_temp.json
+public/tfhe_bg.wasm
+
+# IDE
+.vscode/
+.idea/
+.claude/
+.cursor/
+.aider/
+
+.vercel

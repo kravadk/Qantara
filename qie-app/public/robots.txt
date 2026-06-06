@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Disallow: /pay/
+Disallow: /checkout/
+Disallow: /profile/
+
+Sitemap: https://qantara.app/sitemap.xml

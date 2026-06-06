@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+.env.e2e
+*.log
+.agents
+skills-lock.json

@@ -1,0 +1,78 @@
+{
+  "common": {
+    "loading": "Завантаження…",
+    "save": "Зберегти",
+    "cancel": "Скасувати",
+    "delete": "Видалити",
+    "copy": "Копіювати",
+    "copied": "Скопійовано!",
+    "back": "Назад",
+    "next": "Далі",
+    "confirm": "Підтвердити",
+    "send": "Надіслати",
+    "close": "Закрити",
+    "retry": "Спробувати ще",
+    "open": "Відкрити"
+  },
+  "nav": {
+    "dashboard": "Дашборд",
+    "new_invoice": "Новий інвойс",
+    "splits": "Розподіл",
+    "streams": "Стріми",
+    "batch": "Масова виплата",
+    "escrow": "Ескроу",
+    "subscription": "Підписка",
+    "explorer": "Експлорер",
+    "inbox": "Інбокс",
+    "developer": "Розробнику",
+    "settings": "Налаштування",
+    "agent": "AI Копайлот",
+    "onramp": "Купити QIE",
+    "sdk": "SDK"
+  },
+  "auth": {
+    "sign_in": "Увійти гаманцем",
+    "sign_in_pending": "Підпис…",
+    "sign_in_verifying": "Перевірка…",
+    "sign_out": "Вийти",
+    "wallet_not_connected": "Спочатку підключи гаманець"
+  },
+  "invoice": {
+    "status_created": "Створено",
+    "status_paid": "Оплачено",
+    "status_cancelled": "Скасовано",
+    "status_refunded": "Повернуто",
+    "status_paused": "На паузі",
+    "amount": "Сума",
+    "recipient": "Отримувач",
+    "memo": "Примітка",
+    "expires_at": "Дійсний до",
+    "pay_now": "Оплатити",
+    "pay_gasless": "Оплатити (без газу)",
+    "share_link": "Поділитись посиланням",
+    "view_on_explorer": "Переглянути в експлорері"
+  },
+  "chat": {
+    "send": "Надіслати",
+    "send_onchain": "Надіслати on-chain",
+    "placeholder": "Введіть повідомлення…",
+    "gas_warning": "Кожне повідомлення ≈ $0.0001 газу — справжній чат, справжній блокчейн.",
+    "empty": "Повідомлень ще нема."
+  },
+  "copilot": {
+    "title": "AI копайлот для checkout",
+    "ask_placeholder": "Запитай будь-що про цей інвойс…",
+    "ai_may_be_wrong": "AI може помилятися — завжди перевіряй on-chain.",
+    "presets": {
+      "what_is_this": "Що це за інвойс?",
+      "how_to_pay": "Як заплатити?",
+      "is_it_safe": "Це безпечно?",
+      "what_is_permit": "Що таке permit?"
+    }
+  },
+  "settings": {
+    "language": "Мова",
+    "lang_en": "English",
+    "lang_uk": "Українська"
+  }
+}
