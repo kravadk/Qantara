@@ -183,8 +183,6 @@ describe('source hygiene', () => {
       join(ROOT, 'qie-app', 'src', 'pages', 'Showcase.tsx'),
       join(ROOT, 'qie-app', 'src', 'pages', 'Manifesto.tsx'),
       join(ROOT, 'qie-app', 'src', 'components', 'public', 'PublicMotion.tsx'),
-      join(ROOT, 'qie-app', 'src', 'components', 'public', 'PaymentNetworkCore.tsx'),
-      join(ROOT, 'qie-app', 'src', 'components', 'public', 'PaymentNetworkFallback.tsx'),
       join(ROOT, 'qie-app', 'src', 'components', 'public', 'usePublicSignals.ts'),
     ];
     const badEncoding = /вЂ|пї|В·|в†|вњ|СЈ|в–/;
@@ -196,13 +194,10 @@ describe('source hygiene', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('lazy-loads the public 3D landing scene outside the home route module', () => {
+  it('keeps the landing lightweight (no heavy 3D scene on the home route)', () => {
     const home = readFileSync(join(ROOT, 'qie-app', 'src', 'pages', 'Home.tsx'), 'utf8');
-    const scene = readFileSync(join(ROOT, 'qie-app', 'src', 'components', 'public', 'PaymentNetworkCore.tsx'), 'utf8');
-    expect(home).toContain('lazy(() =>');
-    expect(home).toContain("import('../components/public/PaymentNetworkCore')");
     expect(home).not.toContain('@react-three/fiber');
-    expect(scene).toContain('@react-three/fiber');
+    expect(home).not.toContain('PaymentNetworkCore');
   });
 
   it('normalizes backend payment requirement records without local records', () => {

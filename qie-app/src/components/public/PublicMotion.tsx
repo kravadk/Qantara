@@ -35,10 +35,10 @@ export function Reveal({
   const reduced = useReducedMotion();
   return (
     <motion.div
-      initial={reduced ? false : { opacity: 0, y: 24 }}
-      whileInView={reduced ? undefined : { opacity: 1, y: 0 }}
+      initial={reduced ? false : { opacity: 0 }}
+      whileInView={reduced ? undefined : { opacity: 1 }}
       viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.4, delay, ease: 'easeOut' }}
       className={className}
     >
       {children}
@@ -117,22 +117,18 @@ export function MetricPill({ label, value, ok = true }: { label: string; value: 
 }
 
 export function ProofRail({ compact = false }: { compact?: boolean }) {
-  const reduced = useReducedMotion();
   const steps = ['Create', 'Chat', 'Pay', 'Verify', 'Receipt', 'Webhook'];
   return (
-    <div className={`rounded-3xl border border-primary/20 bg-primary/[0.045] ${compact ? 'p-3' : 'p-5'}`}>
+    <div className={`rounded-3xl border border-border-default bg-surface-1/60 ${compact ? 'p-3' : 'p-5'}`}>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
         {steps.map((step, index) => (
-          <motion.div
+          <div
             key={step}
-            initial={reduced ? false : { opacity: 0.55 }}
-            animate={reduced ? undefined : { opacity: [0.55, 1, 0.55], boxShadow: ['0 0 0 rgba(240,44,120,0)', '0 0 24px rgba(240,44,120,0.16)', '0 0 0 rgba(240,44,120,0)'] }}
-            transition={reduced ? undefined : { duration: 3.2, delay: index * 0.28, repeat: Infinity }}
             className="rounded-2xl border border-border-default bg-surface-1 px-3 py-3"
           >
             <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-text-muted">0{index + 1}</div>
             <div className="mt-1 text-sm font-bold text-white">{step}</div>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

@@ -1,16 +1,9 @@
-import { lazy, Suspense } from 'react';
 import { ArrowRight, BadgeCheck, Code2, ExternalLink, Globe2, LockKeyhole, Radio, ReceiptText, ShieldCheck, Sparkles, Wallet, Webhook } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/Button';
-import { HexGrid } from '../components/HexGrid';
-import { PublicCtaRow, LoadingPlate, MetricPill, ProofRail, PublicFooter, Reveal, SectionHeading, usePrefersReducedMotion } from '../components/public/PublicMotion';
-import { PaymentNetworkFallback } from '../components/public/PaymentNetworkFallback';
+import { PublicCtaRow, LoadingPlate, MetricPill, ProofRail, PublicFooter, Reveal, SectionHeading } from '../components/public/PublicMotion';
 import { formatPublicMetric, usePublicSignals } from '../components/public/usePublicSignals';
 import { useSeo } from '../lib/useSeo';
-
-const PaymentNetworkCore = lazy(() =>
-  import('../components/public/PaymentNetworkCore').then(({ PaymentNetworkCore }) => ({ default: PaymentNetworkCore })),
-);
 
 const routeSteps = [
   { icon: ReceiptText, label: 'Create', body: 'Merchant creates a wallet-backed invoice record.' },
@@ -33,7 +26,6 @@ export function Home() {
     description: 'Qantara — create and pay on-chain payment links and invoices on QIE Mainnet. Hosted checkout, deal-room chat, RPC-verified receipts, webhooks, and Telegram.',
     type: 'website',
   });
-  const reducedMotion = usePrefersReducedMotion();
   const signals = usePublicSignals();
   const activeRails = signals.rails?.rails.filter((rail) => rail.status === 'active').length;
   const activeNetwork = signals.networkCatalog?.networks.find((network) => network.key === signals.networkCatalog?.activeNetwork)
@@ -43,17 +35,16 @@ export function Home() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-bg-base text-white">
-      <div className="qie-mesh-bg pointer-events-none absolute inset-0 opacity-80" />
-      <HexGrid />
+      <div className="qie-mesh-bg pointer-events-none absolute inset-0 opacity-25" />
 
       <section className="relative mx-auto grid min-h-[calc(100vh-72px)] max-w-7xl items-center gap-10 px-4 pb-16 pt-24 lg:grid-cols-[0.92fr_1.08fr] lg:pt-20">
         <Reveal className="relative z-10">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-primary">
             <Sparkles className="h-3.5 w-3.5" />
-            QIE-native payment workspace
+            Payments on QIE Mainnet
           </div>
           <h1 className="max-w-4xl text-5xl font-black leading-[0.97] tracking-tight text-white md:text-7xl xl:text-8xl">
-            Payment links with a verifiable rail.
+            Get paid on QIE, with every payment verified on-chain.
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-7 text-text-secondary md:text-lg">
             Qantara turns a QIE invoice into a live deal room: checkout, chat, route planning, RPC verification,
@@ -68,14 +59,19 @@ export function Home() {
           </div>
         </Reveal>
 
-        <Reveal delay={0.12} className="relative z-10">
-          {reducedMotion ? (
-            <PaymentNetworkFallback />
-          ) : (
-            <Suspense fallback={<PaymentNetworkFallback />}>
-              <PaymentNetworkCore />
-            </Suspense>
-          )}
+        <Reveal delay={0.1} className="relative z-10">
+          <div className="rounded-3xl border border-border-default bg-surface-1/60 p-6 backdrop-blur">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-text-muted">Payment lifecycle</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                <ShieldCheck className="h-3.5 w-3.5" /> RPC-verified
+              </span>
+            </div>
+            <ProofRail />
+            <p className="mt-4 text-sm leading-6 text-text-secondary">
+              One invoice hash carries checkout, chat, route planning, RPC verification, receipt, and webhook updates.
+            </p>
+          </div>
         </Reveal>
       </section>
 
@@ -99,7 +95,7 @@ export function Home() {
 
       <section className="relative mx-auto max-w-7xl px-4 py-24">
         <SectionHeading
-          eyebrow="Live payment rail"
+          eyebrow="How it works"
           title="Create, discuss, pay, verify, and reconcile without losing context."
           body="The core product is not a static checkout page. It is an operational loop for merchant and payer actions around the same invoice hash."
         />
@@ -163,7 +159,7 @@ export function Home() {
         <Reveal>
           <LockKeyhole className="mx-auto mb-5 h-9 w-9 text-primary" />
           <h2 className="text-4xl font-black leading-tight tracking-tight text-white md:text-6xl">
-            Ship a payment link that behaves like infrastructure.
+            Create a payment link in a minute.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-text-secondary">
             Start with one invoice. Add chat, receipts, route planning, webhooks, and Telegram as the payment becomes operational.
