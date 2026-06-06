@@ -1,0 +1,21 @@
+﻿# Railway deployment config for Qantara backend.
+# Docs: https://docs.railway.com/reference/config-as-code
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+
+# Mount a persistent volume at /app/data for SQLite.
+# In Railway dashboard: Volumes -> New Volume -> mount path = /app/data
+#
+# Required env vars (set in Railway dashboard, never commit):
+#   API_KEY              - generate via SECURITY.md instructions
+#   WEBHOOK_SECRET       - generate via SECURITY.md instructions
+#   QIE_RPC_URL          - defaults to https://rpc1mainnet.qie.digital
+#   QUSDC_ADDRESS        - 0xc2e433C144B934368640804402cB48924289CB30
+#   QANTARA_FRONTEND_URL - your Vercel deployment URL
+#   CORS_ORIGINS         - comma-separated allowed origins
