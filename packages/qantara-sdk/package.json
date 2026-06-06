@@ -1,0 +1,39 @@
+{
+  "name": "@qie/qantara-sdk",
+  "version": "1.0.0-rc.1",
+  "description": "TypeScript SDK for Qantara - invoices, splits, streams, chat, gasless meta-tx on QIE Mainnet (chain 1990).",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "lint": "tsc --noEmit",
+    "test": "npm run build && node --test \"test/**/*.test.mjs\"",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["qie", "qantara", "payments", "web3", "payment-links", "evm"],
+  "license": "MIT",
+  "homepage": "https://qantara.app",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "peerDependencies": {
+    "ethers": ">=6.0.0",
+    "viem": ">=2.0.0"
+  },
+  "devDependencies": {
+    "ethers": "^6.13.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "viem": "^2.21.0"
+  }
+}
