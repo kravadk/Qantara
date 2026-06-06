@@ -1,0 +1,84 @@
+# =============================================================================
+# Qantara monorepo .gitignore
+# =============================================================================
+# Per-package .gitignore files override/extend this. Anything sensitive must
+# be blocked here as a safety net even if a sub-package forgets.
+# =============================================================================
+
+# --- Secrets ---
+**/.env
+**/.env.e2e
+**/.env.e2e.local
+**/.env.production
+**/.env.runtime-smoke.local
+!**/.env.example
+
+# --- Terraform (state + filled vars may contain secrets) ---
+infra/.terraform/
+infra/.terraform.lock.hcl
+**/*.tfstate
+**/*.tfstate.*
+infra/terraform.tfvars
+!infra/terraform.tfvars.example
+
+# --- Dependencies ---
+**/node_modules/
+
+# --- Build output ---
+**/dist/
+**/build/
+!qie-app/src/pages/app/build/
+!qie-app/src/pages/app/build/**
+**/coverage/
+**/coverage.json
+**/test-results/
+**/playwright-report/
+**/.next/
+**/.nuxt/
+**/.vercel/
+**/.turbo/
+
+# --- Hardhat / Solidity ---
+**/artifacts/
+**/cache/
+**/typechain-types/
+**/broadcast/
+
+# --- Database (runtime state) ---
+**/data/*.sqlite
+**/data/*.sqlite-*
+**/data/*.db
+backups/
+release/
+*.sqlite
+*.sqlite-*
+
+# --- Deploy manifests (keep .verified.json — public proof bundle) ---
+contracts/deployments/*.json
+!contracts/deployments/*.verified.json
+
+# --- Logs ---
+**/*.log
+**/logs/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- IDE / editor ---
+.vscode/
+.idea/
+.claude/
+.cursor/
+.aider/
+*.swp
+*.swo
+
+# --- Agentation skill cache ---
+**/.agents/
+
+# --- Private analysis (research, comparisons, notes — NEVER public) ---
+analysis/
