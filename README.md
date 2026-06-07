@@ -102,7 +102,8 @@ The API/data layers are split into focused modules behind backwards-compatible b
 | QantaraChat | [`0x76E618ecca8D97038Ec11641E16b9e16a378576A`](https://mainnet.qie.digital/address/0x76E618ecca8D97038Ec11641E16b9e16a378576A) | Optional chat registry integration |
 | QantaraSplits | [`0xBbaeF9CF47C31436505E46cF2a39636a76C7C413`](https://mainnet.qie.digital/address/0xBbaeF9CF47C31436505E46cF2a39636a76C7C413) | Split settlement |
 | QantaraSubscriptionV2 | [`0x30ACe939BD62b6a9E9aF3f5AB4287b5FB5F39c06`](https://mainnet.qie.digital/address/0x30ACe939BD62b6a9E9aF3f5AB4287b5FB5F39c06) | Subscription payments |
-| QantaraGasRelay | [`0xE027abFb3F845c6798fA247f1053Bd1B143768d2`](https://mainnet.qie.digital/address/0xE027abFb3F845c6798fA247f1053Bd1B143768d2) | Gas relay integration |
+| QantaraGasRelay | [`0xE027abFb3F845c6798fA247f1053Bd1B143768d2`](https://mainnet.qie.digital/address/0xE027abFb3F845c6798fA247f1053Bd1B143768d2) | EIP-712 meta-tx forwarder (gasless). On-chain EIP-712 domain name is the legacy `PayLinkGasRelay`; signers read it from `eip712Domain()`. |
+| QantaraChat2771 | [`0xE403F19b533A3fe198835C872Cc11a11cd4bdA75`](https://mainnet.qie.digital/address/0xE403F19b533A3fe198835C872Cc11a11cd4bdA75) | ERC-2771 gasless chat target — relay-sponsored messages stay attributed on-chain to the signer |
 
 QUSDC is enabled only when a production token address is configured and passes preflight. The example address currently points to a token whose metadata includes a non-production label, so it is intentionally rejected by production preflight. Product reference: [QUSDC Stable](https://www.stable.qie.digital/) and [QUSDC Docs](https://docs.stable.qie.digital/).
 
@@ -303,7 +304,7 @@ Required Vercel environment variables:
 - `VITE_QANTARA_ADDRESS=0x...`
 - `VITE_QANTARA_MULTIPAY_ADDRESS=0x...`
 - `VITE_QUSDC_ADDRESS=0x...` only when production QUSDC is enabled
-- Optional public contract addresses: `VITE_QANTARA_CHAT_ADDRESS`, `VITE_QANTARA_SPLITS_ADDRESS`, `VITE_QANTARA_SUBSCRIPTION_V2_ADDRESS`, `VITE_QANTARA_GAS_RELAY_ADDRESS`, `VITE_MILESTONE_ESCROW_ADDRESS`, `VITE_RECURRING_SCHEDULER_ADDRESS`, `VITE_BATCH_PAYOUT_ADDRESS`
+- Optional public contract addresses: `VITE_QANTARA_CHAT_ADDRESS`, `VITE_QANTARA_CHAT2771_ADDRESS` (gasless chat target), `VITE_QANTARA_SPLITS_ADDRESS`, `VITE_QANTARA_SUBSCRIPTION_V2_ADDRESS`, `VITE_QANTARA_GAS_RELAY_ADDRESS`, `VITE_MILESTONE_ESCROW_ADDRESS`, `VITE_RECURRING_SCHEDULER_ADDRESS`, `VITE_BATCH_PAYOUT_ADDRESS`
 
 Do not set `API_KEY`, `QANTARA_API_KEY`, webhook secrets, JWT secrets, private
 keys, or any `VITE_*_API_KEY` in Vercel. Merchant browser actions use wallet

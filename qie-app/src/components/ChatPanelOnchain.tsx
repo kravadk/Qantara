@@ -1,9 +1,10 @@
-﻿import { useEffect, useMemo, useState } from 'react';
-import { useAccount, useWatchContractEvent, useWriteContract, useReadContract } from 'wagmi';
-import { keccak256, encodePacked, type Address, type Hex } from 'viem';
+import { useEffect, useMemo, useState } from 'react';
+import { useAccount, useWatchContractEvent, useWriteContract, useReadContract, usePublicClient, useSignTypedData } from 'wagmi';
+import { keccak256, encodePacked, encodeFunctionData, type Address, type Hex } from 'viem';
 import { Loader2, Send, Zap } from 'lucide-react';
-import { qantaraChatAbi, QANTARA_CHAT_ADDRESS } from '../lib/chatAbi';
+import { qantaraChatAbi, QANTARA_CHAT_ADDRESS, QANTARA_CHAT2771_ADDRESS } from '../lib/chatAbi';
 import { encryptMessage, decryptMessage } from '../lib/chatClient';
+import { signAndSponsor, gaslessChatConfigured, type SignTypedDataFn } from '../lib/relayClient';
 import { qieMainnet } from '../config/wagmi';
 
 const ZERO_HASH = '0x0000000000000000000000000000000000000000000000000000000000000000' as const;
@@ -33,12 +34,25 @@ function deriveConversationId(a: Address, b: Address): Hex {
 /**
  * On-chain ciphertext chat panel.
  *
- * Each `Send` = wallet popup + 1 tx (~50-80k gas). The expensive UX is the point:
- * real messages, real chain, real cost.
+ * Two modes, both real on-chain:
+ *  - Self-paid: each Send = wallet popup + 1 tx (~50-80k gas) to QantaraChat.
+ *  - Gasless (⚡): the user signs an EIP-712 ForwardRequest (no gas) and the
+ *    backend relayer sponsors the tx to QantaraChat2771. The message is still
+ *    attributed on-chain to the signer (ERC-2771), not to the relayer.
  */
 export function ChatPanelOnchain({ counterparty, invoiceHash }: ChatPanelOnchainProps) {
   const { address } = useAccount();
+  const publicClient = usePublicClient({ chainId: qieMainnet.id });
   const { writeContract, isPending, error: writeError } = useWriteContract();
+  const { signTypedDataAsync } = useSignTypedData();
+
+  const gaslessAvailable = gaslessChatConfigured(QANTARA_CHAT2771_ADDRESS);
+  const [gasless, setGasless] = useState(gaslessAvailable);
+  const [relayPending, setRelayPending] = useState(false);
+  const [relayError, setRelayError] = useState<string | null>(null);
+
+  const activeChat = (gasless && gaslessAvailable ? QANTARA_CHAT2771_ADDRESS : QANTARA_CHAT_ADDRESS) as Address;
+  const busy = isPending || relayPending;
 
   const conversationId = useMemo(() => {
     if (!address) return undefined;
@@ -49,7 +63,7 @@ export function ChatPanelOnchain({ counterparty, invoiceHash }: ChatPanelOnchain
   const [msgs, setMsgs] = useState<Msg[]>([]);
 
   const { data: count } = useReadContract({
-    address: QANTARA_CHAT_ADDRESS,
+    address: activeChat,
     abi: qantaraChatAbi,
     functionName: 'messageCount',
     args: conversationId ? [conversationId] : undefined,
@@ -57,7 +71,7 @@ export function ChatPanelOnchain({ counterparty, invoiceHash }: ChatPanelOnchain
   });
 
   useWatchContractEvent({
-    address: QANTARA_CHAT_ADDRESS,
+    address: activeChat,
     abi: qantaraChatAbi,
     eventName: 'Message',
     args: conversationId ? { conversationId } : undefined,
@@ -88,14 +102,45 @@ export function ChatPanelOnchain({ counterparty, invoiceHash }: ChatPanelOnchain
     },
   });
 
+  // Reset the thread when the counterparty, account, or chat contract (mode) changes.
   useEffect(() => {
     setMsgs([]);
-  }, [counterparty, address]);
+  }, [counterparty, address, activeChat]);
 
   const send = async () => {
-    if (!address || !draft.trim()) return;
+    if (!address || !draft.trim() || busy) return;
     const ciphertext = encryptMessage(draft.trim(), address, counterparty);
     const meta = invoiceHash ?? ZERO_HASH;
+
+    if (gasless && gaslessAvailable) {
+      if (!publicClient) {
+        setRelayError('Network client unavailable — try again.');
+        return;
+      }
+      setRelayError(null);
+      setRelayPending(true);
+      try {
+        const data = encodeFunctionData({
+          abi: qantaraChatAbi,
+          functionName: 'sendMessage',
+          args: [counterparty, ciphertext, meta],
+        });
+        await signAndSponsor(publicClient, signTypedDataAsync as unknown as SignTypedDataFn, {
+          from: address,
+          to: QANTARA_CHAT2771_ADDRESS as Address,
+          data,
+          nowMs: Date.now(),
+        });
+        setDraft('');
+        // The Message event watcher picks up the new message once mined.
+      } catch (e: any) {
+        setRelayError((e?.message ?? 'Gasless send failed').slice(0, 160));
+      } finally {
+        setRelayPending(false);
+      }
+      return;
+    }
+
     writeContract({
       address: QANTARA_CHAT_ADDRESS,
       abi: qantaraChatAbi,
@@ -110,15 +155,31 @@ export function ChatPanelOnchain({ counterparty, invoiceHash }: ChatPanelOnchain
   return (
     <div className="flex h-full flex-col rounded-xl border border-slate-700 bg-slate-900/60">
       <div className="flex items-center gap-2 border-b border-slate-700 px-4 py-2 text-xs text-slate-400">
-        <Zap className="h-3 w-3 text-amber-400" />
+        <Zap className={`h-3 w-3 ${gasless && gaslessAvailable ? 'text-emerald-400' : 'text-amber-400'}`} />
         <span>On-chain chat with</span>
         <code className="text-slate-200">{counterparty.slice(0, 6)}…{counterparty.slice(-4)}</code>
-        <span className="ml-auto text-slate-500">{count ? `${count.toString()} msgs` : ''}</span>
+        {gaslessAvailable ? (
+          <button
+            type="button"
+            onClick={() => setGasless((g) => !g)}
+            disabled={busy}
+            className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+              gasless ? 'bg-emerald-600/30 text-emerald-200' : 'bg-slate-700/50 text-slate-300'
+            } disabled:opacity-50`}
+            title="Toggle gasless: sign once, the relayer pays the gas"
+          >
+            {gasless ? '⚡ Gasless on' : 'Gasless off'}
+          </button>
+        ) : (
+          <span className="ml-auto text-slate-500">{count ? `${count.toString()} msgs` : ''}</span>
+        )}
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
         {msgs.length === 0 ? (
           <div className="text-center text-xs text-slate-500 py-8">
-            No messages yet. The first one is on you — costs ~$0.0001 in QIE gas.
+            {gasless && gaslessAvailable
+              ? 'No messages yet. Gasless: you sign, the relayer pays the gas.'
+              : 'No messages yet. The first one is on you — costs ~$0.0001 in QIE gas.'}
           </div>
         ) : (
           msgs.map((m) => {
@@ -156,35 +217,38 @@ export function ChatPanelOnchain({ counterparty, invoiceHash }: ChatPanelOnchain
       </div>
       <div className="border-t border-slate-700 p-3">
         <div className="mb-2 text-[10px] text-slate-500">
-          Each message ≈ $0.0001 gas — real talk, real chain.
+          {gasless && gaslessAvailable
+            ? 'Gasless: sign once in your wallet — the relayer submits and pays gas. You stay the on-chain author.'
+            : 'Each message ≈ $0.0001 gas — real talk, real chain.'}
         </div>
         <div className="flex gap-2">
           <input
             type="text"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Type a message…"
+            placeholder={gasless && gaslessAvailable ? 'Type a gasless message…' : 'Type a message…'}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 void send();
               }
             }}
-            disabled={!address || isPending}
+            disabled={!address || busy}
             className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-emerald-500/50 disabled:opacity-50"
           />
           <button
             type="button"
             onClick={() => void send()}
-            disabled={!address || !draft.trim() || isPending}
+            disabled={!address || !draft.trim() || busy}
             className="rounded-md bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
           >
-            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </button>
         </div>
-        {writeError ? (
+        {writeError && !(gasless && gaslessAvailable) ? (
           <div className="mt-2 text-xs text-red-400">{writeError.message.slice(0, 120)}</div>
         ) : null}
+        {relayError ? <div className="mt-2 text-xs text-red-400">{relayError}</div> : null}
       </div>
     </div>
   );
