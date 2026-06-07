@@ -38,7 +38,12 @@ export function AppLayout() {
   }, [sidebarOpen]);
 
   return (
-    <div className="relative min-h-screen bg-bg-base flex overflow-hidden">
+    <div className="relative min-h-screen bg-bg-base flex overflow-hidden font-body">
+      {/* Subtle static atmosphere — premium depth without the landing's animated mesh. */}
+      <div aria-hidden className="pointer-events-none fixed inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(48%_38%_at_10%_-4%,rgba(240,44,120,0.10),transparent_60%),radial-gradient(42%_38%_at_106%_4%,rgba(126,34,206,0.10),transparent_62%)]" />
+        <div className="ledger-grid absolute inset-0 opacity-25" />
+      </div>
       <div className="noise-overlay pointer-events-none" />
 
       {/* Mobile overlay backdrop */}

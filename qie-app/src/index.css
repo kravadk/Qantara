@@ -596,11 +596,10 @@
   /* Full-page living aurora — drifting colored light behind everything. */
   .aurora {
     background:
-      radial-gradient(38% 34% at 18% 22%, rgba(240, 44, 120, 0.28), transparent 60%),
-      radial-gradient(34% 30% at 82% 14%, rgba(126, 34, 206, 0.26), transparent 62%),
-      radial-gradient(46% 42% at 72% 78%, rgba(168, 85, 247, 0.20), transparent 60%),
-      radial-gradient(30% 30% at 28% 88%, rgba(249, 115, 22, 0.14), transparent 60%);
-    filter: blur(36px);
+      radial-gradient(40% 36% at 16% 18%, rgba(240, 44, 120, 0.20), transparent 62%),
+      radial-gradient(36% 32% at 84% 12%, rgba(126, 34, 206, 0.18), transparent 64%),
+      radial-gradient(48% 44% at 74% 82%, rgba(168, 85, 247, 0.14), transparent 62%);
+    filter: blur(48px);
     animation: aurora-drift 28s var(--ease-smooth) infinite alternate;
     will-change: transform;
   }

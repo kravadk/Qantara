@@ -2,7 +2,7 @@
 import {
   LayoutDashboard, Plus,
   Settings, Code, ChevronDown, Copy, Inbox,
-  LogOut, X, Webhook, Shield, KeyRound, BarChart3,
+  LogOut, X, Webhook, Shield, KeyRound, BarChart3, Wallet,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useCallback } from 'react';
@@ -10,6 +10,7 @@ import { useAccount, useDisconnect, useBalance } from 'wagmi';
 import { RefreshCw } from 'lucide-react';
 import { useNotifications } from '../hooks/useNotifications';
 import { BuyQieRail } from './BuyQieRail';
+import { WalletModal } from './WalletModal';
 
 function BalanceDisplay() {
   const { address } = useAccount();
@@ -164,10 +165,11 @@ interface AppSidebarProps {
 
 export function AppSidebar({ onClose }: AppSidebarProps) {
   const location = useLocation();
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { unreadCount, setupRequired, walletRequired } = useNotifications();
   const [copied, setCopied] = useState(false);
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(address || '');
@@ -179,7 +181,7 @@ export function AppSidebar({ onClose }: AppSidebarProps) {
   const nav = onClose;
 
   return (
-    <aside className="w-64 h-screen bg-bg-base border-r border-border-default flex flex-col select-none">
+    <aside className="w-64 h-screen bg-surface-1/55 backdrop-blur-2xl border-r border-white/[0.08] flex flex-col select-none">
       {/* Logo */}
       <div className="px-4 pt-4 pb-3 flex items-center justify-between gap-2">
         <Link to="/" className="flex items-center gap-2 group min-w-0" onClick={nav}>
@@ -188,7 +190,7 @@ export function AppSidebar({ onClose }: AppSidebarProps) {
             alt="Qantara"
             className="h-8 w-8 shrink-0 rounded-xl shadow-[0_0_16px_rgba(240,44,120,0.4)] transition-transform duration-200 group-hover:scale-105"
           />
-          <span className="text-[15px] font-extrabold text-white tracking-tight whitespace-nowrap">
+          <span className="font-display text-[17px] font-semibold text-white tracking-tight whitespace-nowrap">
             <span className="qie-gradient-text">Qantara</span>
           </span>
         </Link>
@@ -236,7 +238,17 @@ export function AppSidebar({ onClose }: AppSidebarProps) {
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-border-default space-y-3">
+      <div className="p-3 border-t border-white/[0.08] space-y-3">
+        {!(isConnected && address) ? (
+          <button
+            type="button"
+            onClick={() => setWalletModalOpen(true)}
+            className="qie-btn-primary w-full inline-flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm"
+          >
+            <Wallet className="w-4 h-4" /> Connect wallet
+          </button>
+        ) : (
+        <>
         <BalanceDisplay />
         <BuyQieRail />
 
@@ -276,7 +288,11 @@ export function AppSidebar({ onClose }: AppSidebarProps) {
           <LogOut className="w-3.5 h-3.5" />
           Disconnect
         </button>
+        </>
+        )}
       </div>
+
+      <WalletModal isOpen={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
     </aside>
   );
 }

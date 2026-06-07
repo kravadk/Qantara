@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Reveal, PublicFooter } from '../components/public/PublicMotion';
-import { Atmosphere, Overline, SectionHeader, BentoCard } from '../components/public/landing/parts';
+import { Atmosphere, Overline, SectionHeader, BentoCard, SideRulers } from '../components/public/landing/parts';
 import { formatPublicMetric, usePublicSignals } from '../components/public/usePublicSignals';
 import { useSeo } from '../lib/useSeo';
 
@@ -73,6 +73,7 @@ export function Home() {
 
       {/* ── 1 · Hero ───────────────────────────────────────────────────────── */}
       <section className="sweep-line relative flex min-h-[94vh] flex-col justify-center">
+        <SideRulers />
         <div aria-hidden className="ghost-word pointer-events-none absolute -bottom-[3vw] left-1/2 -translate-x-1/2 select-none whitespace-nowrap text-[26vw]">
           QANTARA
         </div>

@@ -20,7 +20,7 @@ export function TopBar({ onOpenSidebar }: TopBarProps) {
 
   return (
     <>
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-4 px-5 py-3 border-b border-border-default bg-bg-base/90 backdrop-blur-md">
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-4 px-5 py-3 border-b border-white/[0.08] bg-bg-base/60 backdrop-blur-xl">
         <div className="flex items-center gap-3 min-w-0">
           {onOpenSidebar && (
             <button
@@ -31,7 +31,7 @@ export function TopBar({ onOpenSidebar }: TopBarProps) {
               <Menu className="w-4 h-4" />
             </button>
           )}
-          <span className="text-sm font-bold text-white md:hidden">Qantara</span>
+          <span className="font-display text-base font-semibold text-white md:hidden">Qantara</span>
         </div>
 
         <div className="flex items-center gap-2">

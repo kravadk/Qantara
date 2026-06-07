@@ -71,7 +71,8 @@ export function Pay() {
   const [payError, setPayError] = useState<string | null>(null);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [copiedTarget, setCopiedTarget] = useState<'link' | 'hash' | null>(null);
-  const [qrOpen, setQrOpen] = useState(true);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [routePlan, setRoutePlan] = useState<PaymentRoutePlan | null>(null);
   const [routePlanError, setRoutePlanError] = useState<string | null>(null);
   const [routePlanLoading, setRoutePlanLoading] = useState(false);
@@ -724,7 +725,7 @@ export function Pay() {
   return (
     <div role="main" className="relative min-h-screen bg-bg-base text-white">
       <div className="qie-mesh-bg pointer-events-none absolute inset-0 opacity-50" />
-      <div className="relative mx-auto max-w-md space-y-4 px-4 py-12">
+      <div className="relative mx-auto max-w-4xl space-y-5 px-4 py-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-text-secondary">
             <Lock className="h-4 w-4 text-primary" />
@@ -738,170 +739,203 @@ export function Pay() {
           </span>
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="space-y-3 rounded-2xl border border-border-default bg-surface-1 p-8 text-center">
-          <div className="text-[10px] uppercase tracking-widest text-text-muted">Pay</div>
-          <div className="flex items-baseline justify-center gap-2">
-            <span className="text-5xl font-bold tracking-tight">{invoice.amount}</span>
-            <span className="text-xl text-text-secondary">{symbol}</span>
-          </div>
-          {invoice.title && <div className="text-sm text-white">{invoice.title}</div>}
-          {invoice.memo && <div className="mx-auto max-w-xs text-xs text-text-muted">{invoice.memo}</div>}
-        </motion.div>
+        <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
+          {/* ── LEFT: the payment action ─────────────────────────────────── */}
+          <div className="space-y-4 lg:sticky lg:top-6">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              className="space-y-3 rounded-2xl border border-border-default bg-surface-1 p-8 text-center">
+              <div className="text-[10px] uppercase tracking-widest text-text-muted">Pay</div>
+              <div className="flex items-baseline justify-center gap-2">
+                <span className="text-5xl font-bold tracking-tight">{invoice.amount}</span>
+                <span className="text-xl text-text-secondary">{symbol}</span>
+              </div>
+              {invoice.title && <div className="text-sm text-white">{invoice.title}</div>}
+              {invoice.memo && <div className="mx-auto max-w-xs text-xs text-text-muted">{invoice.memo}</div>}
 
-        <TrustHeader invoice={invoice} status={payStatus} />
-        <QieNetworkPanel
-          catalog={networkCatalog}
-          catalogError={networkCatalogError}
-          backendHealth={backendHealth}
-          backendHealthError={backendHealthError}
-          backendHealthLoading={backendHealthLoading}
-          onRefresh={() => void refreshBackendHealth()}
-        />
-        <MerchantTrustBadges merchant={invoice.merchant} />
-        <LiveStatusStrip status={payStatus} events={liveEvents} streamStatus={streamStatus} lastStreamEventAt={lastStreamEventAt} />
-        {noGasForGas && (
-          <GaslessNudge
-            amount={invoice.amount}
-            symbol={symbol}
-            gaslessAvailable={Boolean(gaslessRoute)}
-            selectedIsGasless={selectedRoute?.requiresNativeGas === false}
-            acquisitionAvailable={acquisitionAvailable}
-            onUseGasless={() => {
-              if (!gaslessRoute) return;
-              manualRouteRef.current = true;
-              setSelectedRouteId(gaslessRoute.id);
-            }}
-            onGetQie={scrollToAcquire}
-            onContactMerchant={scrollToDealRoom}
-          />
-        )}
-        <PaymentRoutePanel
-          plan={routePlan}
-          selectedRouteId={selectedRouteId}
-          isLoading={routePlanLoading}
-          error={routePlanError}
-          qusdcCapabilities={qusdcCapabilities}
-          qusdcCapabilitiesError={qusdcCapabilitiesError}
-          onSelectRoute={(routeId) => { manualRouteRef.current = true; setSelectedRouteId(routeId); }}
-        />
-        <div id="acquire-qie" className="scroll-mt-6">
-          <AcquisitionRoutesPanel
-            routes={routePlan?.acquisitionRoutes ?? []}
-            symbol={symbol}
-            mintingRouteId={mintingRouteId}
-            onMintQusdc={(route) => void handleMintQusdc(route)}
-          />
-        </div>
-        <PayTrustRail invoice={invoice} />
-        <WalletHealthCard compact />
-        {wrongNetwork && canPay && (
-          <CheckoutAlert
-            icon={<AlertTriangle className="h-5 w-5" />}
-            title="Wrong wallet network"
-            tone="warning"
-            body={`This checkout accepts payment only on QIE Mainnet, chain ${qieMainnet.id}. Switch networks before submitting a transaction.`}
-          />
-        )}
+              <div className="mt-4 space-y-2 border-t border-border-default pt-4 text-left">
+                <Row label="To" value={
+                  <a href={`${explorerUrl}/address/${invoice.merchant}`} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-1 font-mono text-xs hover:text-primary">
+                    {invoice.merchant.slice(0, 6)}...{invoice.merchant.slice(-4)} <ExternalLink className="h-3 w-3" />
+                  </a>
+                } />
+                {invoice.expiresAt > 0 && (
+                  <Row label="Expires" value={<span className="text-xs"><Clock className="mr-1 inline h-3 w-3" />{fullDateFormatter.format(new Date(invoice.expiresAt * 1000))}</span>} />
+                )}
+                <Row label="Invoice" value={
+                  <button
+                    type="button"
+                    onClick={handleCopyInvoiceHash}
+                    className="inline-flex items-center gap-1 font-mono text-xs hover:text-primary"
+                    title="Copy invoice hash"
+                    aria-label="Copy invoice hash"
+                  >
+                    {invoice.hash.slice(0, 10)}...{invoice.hash.slice(-6)} {copiedTarget === 'hash' ? <CheckCircle className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
+                  </button>
+                } />
+              </div>
+            </motion.div>
 
-        <div className="space-y-2 rounded-2xl border border-border-default bg-surface-1 p-5">
-          <Row label="To" value={
-            <a href={`${explorerUrl}/address/${invoice.merchant}`} target="_blank" rel="noreferrer"
-              className="inline-flex items-center gap-1 font-mono text-xs hover:text-primary">
-              {invoice.merchant.slice(0, 6)}...{invoice.merchant.slice(-4)} <ExternalLink className="h-3 w-3" />
-            </a>
-          } />
-          {invoice.expiresAt > 0 && (
-            <Row label="Expires" value={<span className="text-xs"><Clock className="mr-1 inline h-3 w-3" />{fullDateFormatter.format(new Date(invoice.expiresAt * 1000))}</span>} />
-          )}
-          <Row label="Invoice" value={
-            <button
-              type="button"
-              onClick={handleCopyInvoiceHash}
-              className="inline-flex items-center gap-1 font-mono text-xs hover:text-primary"
-              title="Copy invoice hash"
-              aria-label="Copy invoice hash"
-            >
-              {invoice.hash.slice(0, 10)}...{invoice.hash.slice(-6)} {copiedTarget === 'hash' ? <CheckCircle className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
-            </button>
-          } />
-        </div>
-
-        {payStatus === 'already-paid' || payStatus === 'success' ? (
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-            className="space-y-2 rounded-2xl border border-primary/30 bg-primary/5 p-6 text-center">
-            <CheckCircle className="mx-auto h-8 w-8 text-primary" />
-            <div className="font-bold">Payment confirmed</div>
-            {invoice.payer && <div className="text-xs text-text-muted">By {invoice.payer.slice(0, 6)}...{invoice.payer.slice(-4)}</div>}
-            {txHash && (
-              <a href={`${explorerUrl}/tx/${txHash}`} target="_blank" rel="noreferrer"
-                className="mt-2 block font-mono text-xs text-text-muted hover:text-primary">
-                Tx: {txHash.slice(0, 14)}...
-              </a>
+            {noGasForGas && (
+              <GaslessNudge
+                amount={invoice.amount}
+                symbol={symbol}
+                gaslessAvailable={Boolean(gaslessRoute)}
+                selectedIsGasless={selectedRoute?.requiresNativeGas === false}
+                acquisitionAvailable={acquisitionAvailable}
+                onUseGasless={() => {
+                  if (!gaslessRoute) return;
+                  manualRouteRef.current = true;
+                  setSelectedRouteId(gaslessRoute.id);
+                }}
+                onGetQie={scrollToAcquire}
+                onContactMerchant={scrollToDealRoom}
+              />
             )}
-            {invoice.has_success_url && QANTARA_BACKEND_URL && (
-              <a
-                href={`${QANTARA_BACKEND_URL}/v1/invoices/${invoice.hash}/return?type=success`}
-                className="mt-3 inline-flex items-center justify-center gap-1 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition hover:opacity-90"
-              >
-                Return to merchant
-              </a>
+
+            {/* Acquisition rails surface only when the payer actually needs QIE. */}
+            {noGasForGas && (
+              <div id="acquire-qie" className="scroll-mt-6">
+                <AcquisitionRoutesPanel
+                  routes={routePlan?.acquisitionRoutes ?? []}
+                  symbol={symbol}
+                  mintingRouteId={mintingRouteId}
+                  onMintQusdc={(route) => void handleMintQusdc(route)}
+                />
+              </div>
             )}
-          </motion.div>
-        ) : payStatus === 'expired' ? (
-          <CheckoutAlert
-            icon={<Clock className="h-5 w-5" />}
-            title="Invoice expired"
-            tone="warning"
-            body="This invoice can no longer be paid. Ask the merchant to issue a current invoice."
-          />
-        ) : payStatus === 'error' ? (
-          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-center text-sm text-red-300">
-            <XCircle className="mx-auto mb-1 h-5 w-5" /> {payError}
-            {wrongNetwork && (
-              <Button size="sm" className="mt-3" loading={isSwitchingChain} onClick={() => void switchChainAsync({ chainId: qieMainnet.id })}>
+
+            {wrongNetwork && canPay && (
+              <CheckoutAlert
+                icon={<AlertTriangle className="h-5 w-5" />}
+                title="Wrong wallet network"
+                tone="warning"
+                body={`This checkout accepts payment only on QIE Mainnet, chain ${qieMainnet.id}. Switch networks before submitting a transaction.`}
+              />
+            )}
+
+            {payStatus === 'already-paid' || payStatus === 'success' ? (
+              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                className="space-y-2 rounded-2xl border border-primary/30 bg-primary/5 p-6 text-center">
+                <CheckCircle className="mx-auto h-8 w-8 text-primary" />
+                <div className="font-bold">Payment confirmed</div>
+                {invoice.payer && <div className="text-xs text-text-muted">By {invoice.payer.slice(0, 6)}...{invoice.payer.slice(-4)}</div>}
+                {txHash && (
+                  <a href={`${explorerUrl}/tx/${txHash}`} target="_blank" rel="noreferrer"
+                    className="mt-2 block font-mono text-xs text-text-muted hover:text-primary">
+                    Tx: {txHash.slice(0, 14)}...
+                  </a>
+                )}
+                {invoice.has_success_url && QANTARA_BACKEND_URL && (
+                  <a
+                    href={`${QANTARA_BACKEND_URL}/v1/invoices/${invoice.hash}/return?type=success`}
+                    className="mt-3 inline-flex items-center justify-center gap-1 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition hover:opacity-90"
+                  >
+                    Return to merchant
+                  </a>
+                )}
+              </motion.div>
+            ) : payStatus === 'expired' ? (
+              <CheckoutAlert
+                icon={<Clock className="h-5 w-5" />}
+                title="Invoice expired"
+                tone="warning"
+                body="This invoice can no longer be paid. Ask the merchant to issue a current invoice."
+              />
+            ) : payStatus === 'error' ? (
+              <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-center text-sm text-red-300">
+                <XCircle className="mx-auto mb-1 h-5 w-5" /> {payError}
+                {wrongNetwork && (
+                  <Button size="sm" className="mt-3" loading={isSwitchingChain} onClick={() => void switchChainAsync({ chainId: qieMainnet.id })}>
+                    Switch to QIE Mainnet
+                  </Button>
+                )}
+              </div>
+            ) : !isConnected && !selectedRouteIsExternal ? (
+              <Button size="lg" className="w-full" onClick={() => setIsWalletModalOpen(true)}>Connect wallet to pay</Button>
+            ) : routePlanBlocksPayment || routePlanError || !selectedRoute ? (
+              <Button size="lg" className="w-full" disabled>
+                {routePlanError ? 'Payment route unavailable' : routePlan?.reason || 'No payable route'}
+              </Button>
+            ) : wrongNetwork && !selectedRouteIsExternal ? (
+              <Button size="lg" className="w-full" loading={isSwitchingChain} onClick={() => void switchChainAsync({ chainId: qieMainnet.id })}>
                 Switch to QIE Mainnet
               </Button>
+            ) : (
+              <Button size="lg" className="w-full" loading={payStatus === 'paying' || payStatus === 'verifying'} onClick={handlePay}>
+                {payStatus === 'verifying' ? 'Verifying on RPC...' : payStatus === 'paying' ? 'Waiting for wallet...' : selectedRouteIsExternal ? `Open ${selectedRoute.label}` : `Pay with ${selectedRoute.label}`}
+              </Button>
+            )}
+
+            {canPay && (
+              <button
+                type="button"
+                onClick={() => { setChatOpen(true); setTimeout(scrollToDealRoom, 60); }}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border-default bg-surface-1 px-4 py-3 text-sm font-bold text-text-secondary transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Ask merchant before paying
+              </button>
             )}
           </div>
-        ) : !isConnected && !selectedRouteIsExternal ? (
-          <Button size="lg" className="w-full" onClick={() => setIsWalletModalOpen(true)}>Connect wallet to pay</Button>
-        ) : routePlanBlocksPayment || routePlanError || !selectedRoute ? (
-          <Button size="lg" className="w-full" disabled>
-            {routePlanError ? 'Payment route unavailable' : routePlan?.reason || 'No payable route'}
-          </Button>
-        ) : wrongNetwork && !selectedRouteIsExternal ? (
-          <Button size="lg" className="w-full" loading={isSwitchingChain} onClick={() => void switchChainAsync({ chainId: qieMainnet.id })}>
-            Switch to QIE Mainnet
-          </Button>
-        ) : (
-          <Button size="lg" className="w-full" loading={payStatus === 'paying' || payStatus === 'verifying'} onClick={handlePay}>
-            {payStatus === 'verifying' ? 'Verifying on RPC...' : payStatus === 'paying' ? 'Waiting for wallet...' : selectedRouteIsExternal ? `Open ${selectedRoute.label}` : `Pay with ${selectedRoute.label}`}
-          </Button>
-        )}
 
-        {canPay && (
-          <button
-            type="button"
-            onClick={scrollToDealRoom}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-border-default bg-surface-1 px-4 py-3 text-sm font-bold text-text-secondary transition-colors hover:border-primary/40 hover:text-primary"
-          >
-            <MessageSquare className="h-4 w-4" />
-            Ask merchant before paying
-          </button>
-        )}
+          {/* ── RIGHT: context, trust, share, chat ───────────────────────── */}
+          <div className="space-y-4">
+            <TrustHeader invoice={invoice} status={payStatus} />
 
-        <SharePanel
-          payUrl={payUrl}
-          qrOpen={qrOpen}
-          copied={copiedTarget === 'link'}
-          onToggleQr={() => setQrOpen((current) => !current)}
-          onCopy={handleCopyLink}
-          onShare={() => void handleShareLink()}
-        />
+            <details className="group overflow-hidden rounded-2xl border border-border-default bg-surface-1/60">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-bold text-text-secondary transition-colors hover:text-white [&::-webkit-details-marker]:hidden">
+                <span>Network, route &amp; trust details</span>
+                <span className="text-text-muted transition-transform group-open:rotate-180">▾</span>
+              </summary>
+              <div className="space-y-3 border-t border-border-default p-3">
+                <PaymentRoutePanel
+                  plan={routePlan}
+                  selectedRouteId={selectedRouteId}
+                  isLoading={routePlanLoading}
+                  error={routePlanError}
+                  qusdcCapabilities={qusdcCapabilities}
+                  qusdcCapabilitiesError={qusdcCapabilitiesError}
+                  onSelectRoute={(routeId) => { manualRouteRef.current = true; setSelectedRouteId(routeId); }}
+                />
+                <QieNetworkPanel
+                  catalog={networkCatalog}
+                  catalogError={networkCatalogError}
+                  backendHealth={backendHealth}
+                  backendHealthError={backendHealthError}
+                  backendHealthLoading={backendHealthLoading}
+                  onRefresh={() => void refreshBackendHealth()}
+                />
+                <MerchantTrustBadges merchant={invoice.merchant} />
+                <LiveStatusStrip status={payStatus} events={liveEvents} streamStatus={streamStatus} lastStreamEventAt={lastStreamEventAt} />
+                <PayTrustRail invoice={invoice} />
+                <WalletHealthCard compact />
+              </div>
+            </details>
 
-        <div id="deal-room" ref={dealRoomRef} className="scroll-mt-6">
-          <DealRoomPanel invoiceHash={invoice.hash} role="payer" title="Ask merchant about this invoice" />
+            <SharePanel
+              payUrl={payUrl}
+              qrOpen={qrOpen}
+              copied={copiedTarget === 'link'}
+              onToggleQr={() => setQrOpen((current) => !current)}
+              onCopy={handleCopyLink}
+              onShare={() => void handleShareLink()}
+            />
+
+            <div id="deal-room" ref={dealRoomRef} className="scroll-mt-6 space-y-3">
+              <button
+                type="button"
+                onClick={() => setChatOpen((o) => !o)}
+                className="flex w-full items-center justify-between gap-2 rounded-2xl border border-border-default bg-surface-1/60 px-4 py-3 text-sm font-bold text-text-secondary transition-colors hover:text-white"
+              >
+                <span className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Ask merchant · chat &amp; resolution</span>
+                <span className={`text-text-muted transition-transform ${chatOpen ? 'rotate-180' : ''}`}>▾</span>
+              </button>
+              {chatOpen && (
+                <DealRoomPanel invoiceHash={invoice.hash} role="payer" title="Ask merchant about this invoice" />
+              )}
+            </div>
+          </div>
         </div>
 
         <p className="text-center text-[10px] text-text-muted">Non-custodial payments on QIE Mainnet - chain {qieMainnet.id}</p>
@@ -1177,7 +1211,6 @@ function PaymentRoutePanel({
             <TrustItem label="Route state" value={plan.reason ?? plan.state} />
             <TrustItem label="Ready routes" value={`${readyRoutes}/${plan.routes.length}`} />
             <TrustItem label="Token" value={`${plan.amount} ${plan.token.symbol}`} />
-            <TrustItem label="Sources" value={plan.dataSources.join(' / ')} />
           </div>
 
           {plan.routes.length === 0 ? (
