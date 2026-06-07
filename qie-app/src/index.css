@@ -4,6 +4,11 @@
   --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
+  /* Landing "settlement terminal" type system (scoped to public pages via classes) */
+  --font-display: "Clash Display", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Satoshi", ui-sans-serif, system-ui, sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
   --color-primary: var(--accent-primary);
   --color-secondary: var(--accent-secondary);
   --color-accent-orange: var(--accent-orange);
@@ -438,8 +443,180 @@
   .qie-gradient-text-anim,
   .float,
   .spin-slow,
-  .pulse-glow {
+  .pulse-glow,
+  .ledger-scan::after {
     animation: none !important;
   }
   .flashlight { background: none; }
+}
+
+/* --- Landing: settlement-terminal utilities --------------------------------- */
+@layer utilities {
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* Fine ruled grid — crisp 1px lines, not blurry mesh. */
+  .ledger-grid {
+    background-image:
+      linear-gradient(to right, rgba(196, 184, 217, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(196, 184, 217, 0.07) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(125% 95% at 50% 0%, #000 50%, transparent 100%);
+    mask-image: radial-gradient(125% 95% at 50% 0%, #000 50%, transparent 100%);
+  }
+
+  /* Landing borders — stronger than the app default token so nothing looks washed out. */
+  .ln-border { border-color: rgba(214, 204, 233, 0.18); }
+  .ln-divide > * + * { border-color: rgba(214, 204, 233, 0.14); }
+
+  /* Single sharp magenta settlement line. */
+  .settlement-line {
+    background: linear-gradient(90deg, transparent, rgba(240, 44, 120, 0.7), transparent);
+    box-shadow: 0 0 24px 1px rgba(240, 44, 120, 0.35);
+  }
+
+  /* Receipt panel — glass over the aurora; high contrast for live data. */
+  .receipt {
+    background:
+      repeating-linear-gradient(180deg, transparent 0 31px, rgba(214,204,233,0.05) 31px 32px),
+      linear-gradient(180deg, rgba(36,27,53,0.72) 0%, rgba(22,16,33,0.78) 100%);
+    backdrop-filter: blur(18px) saturate(1.2);
+    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 50px 140px -44px rgba(0,0,0,0.95), 0 0 80px -30px rgba(240,44,120,0.35), inset 0 1px 0 rgba(255,255,255,0.07);
+  }
+
+  /* Oversized ghost wordmark behind the hero — adds scale/presence. */
+  .ghost-word {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 0.8;
+    background: linear-gradient(180deg, rgba(214,204,233,0.07), rgba(214,204,233,0));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  .receipt-perf {
+    --d: 7px;
+    -webkit-mask:
+      radial-gradient(var(--d) at var(--d) 50%, transparent 96%, #000) left/calc(2*var(--d)) 100% repeat-y,
+      radial-gradient(var(--d) at calc(100% - var(--d)) 50%, transparent 96%, #000) right/calc(2*var(--d)) 100% repeat-y,
+      linear-gradient(#000 0 0) center/calc(100% - 4*var(--d)) 100% no-repeat;
+    mask:
+      radial-gradient(var(--d) at var(--d) 50%, transparent 96%, #000) left/calc(2*var(--d)) 100% repeat-y,
+      radial-gradient(var(--d) at calc(100% - var(--d)) 50%, transparent 96%, #000) right/calc(2*var(--d)) 100% repeat-y,
+      linear-gradient(#000 0 0) center/calc(100% - 4*var(--d)) 100% no-repeat;
+  }
+
+  /* Ledger row: index + content with a hover ink wash. */
+  .ledger-row {
+    transition: background-color 0.18s var(--ease-smooth), color 0.18s var(--ease-smooth);
+  }
+  .ledger-row:hover {
+    background: linear-gradient(90deg, rgba(240, 44, 120, 0.06), transparent 60%);
+  }
+
+  /* Scanline sweep for the live status strip. */
+  .ledger-scan { position: relative; overflow: hidden; }
+  .ledger-scan::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(240, 44, 120, 0.10), transparent);
+    transform: translateX(-100%);
+    animation: ledger-sweep 5.5s var(--ease-smooth) infinite;
+  }
+  @keyframes ledger-sweep {
+    0% { transform: translateX(-100%); }
+    55%, 100% { transform: translateX(100%); }
+  }
+}
+
+/* --- Landing: atmospheric hero + glow (OBSCURA-adapted, magenta single accent) -- */
+@layer utilities {
+  /* Radial magenta glow bloom for the hero. */
+  .hero-glow {
+    background:
+      radial-gradient(60% 50% at 78% 12%, rgba(240, 44, 120, 0.18), transparent 70%),
+      radial-gradient(50% 45% at 12% 8%, rgba(126, 34, 206, 0.14), transparent 72%);
+  }
+
+  /* Horizontal scanlines — very subtle CRT texture. */
+  .scanlines {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.018) 0px,
+      rgba(255, 255, 255, 0.018) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  }
+
+  /* Vertical sweep line travelling across the hero. */
+  .sweep-line { position: relative; overflow: hidden; }
+  .sweep-line::before {
+    content: '';
+    position: absolute; top: 0; bottom: 0; left: 0;
+    width: 40vw;
+    background: linear-gradient(90deg, transparent, rgba(240, 44, 120, 0.08), transparent);
+    transform: translateX(-50vw);
+    animation: hero-sweep 9s var(--ease-smooth) infinite;
+    pointer-events: none;
+  }
+  @keyframes hero-sweep {
+    0% { transform: translateX(-50vw); }
+    60%, 100% { transform: translateX(120vw); }
+  }
+
+  /* Magenta text glow — only on the hero accent phrase. */
+  .text-glow {
+    text-shadow: 0 0 28px rgba(240, 44, 120, 0.45), 0 0 6px rgba(240, 44, 120, 0.3);
+  }
+
+  /* Magenta border/box glow — only on primary CTA + active edges. */
+  .border-glow {
+    box-shadow: 0 0 0 1px rgba(240, 44, 120, 0.35), 0 18px 60px -18px rgba(240, 44, 120, 0.55);
+  }
+
+  /* Glass bento tile — sits over the aurora, so it reads rich (not washed). */
+  .tile {
+    background: linear-gradient(180deg, rgba(36, 27, 53, 0.66), rgba(20, 15, 30, 0.72));
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 30px 90px -40px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: border-color 0.2s var(--ease-smooth), transform 0.2s var(--ease-smooth), box-shadow 0.2s var(--ease-smooth);
+  }
+  .tile:hover {
+    border-color: rgba(240, 44, 120, 0.45);
+    transform: translateY(-4px);
+    box-shadow: 0 30px 90px -34px rgba(240, 44, 120, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Full-page living aurora — drifting colored light behind everything. */
+  .aurora {
+    background:
+      radial-gradient(38% 34% at 18% 22%, rgba(240, 44, 120, 0.28), transparent 60%),
+      radial-gradient(34% 30% at 82% 14%, rgba(126, 34, 206, 0.26), transparent 62%),
+      radial-gradient(46% 42% at 72% 78%, rgba(168, 85, 247, 0.20), transparent 60%),
+      radial-gradient(30% 30% at 28% 88%, rgba(249, 115, 22, 0.14), transparent 60%);
+    filter: blur(36px);
+    animation: aurora-drift 28s var(--ease-smooth) infinite alternate;
+    will-change: transform;
+  }
+  @keyframes aurora-drift {
+    0%   { transform: translate3d(-3%, -2%, 0) scale(1.08) rotate(0deg); }
+    100% { transform: translate3d(4%, 3%, 0) scale(1.2) rotate(4deg); }
+  }
+
+  /* Soft grain. */
+  .grain {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.04;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sweep-line::before { animation: none !important; }
+  .aurora { animation: none !important; }
 }
