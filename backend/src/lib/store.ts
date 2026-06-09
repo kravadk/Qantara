@@ -499,8 +499,12 @@ export function hasConversationAccess(
   if (options.isMerchant) return true;
   const inv = getInvoice(hash);
   if (!inv) return false;
+  // Claimed conversation: only the payer holding the bound guest token may access it.
   if (inv.guestToken) return options.guestToken === inv.guestToken;
-  return !options.guestToken && countMessages(hash) === 0;
+  // Unclaimed conversation (no payer guest token bound yet): the invoice-link holder may read
+  // and start it WITHOUT a token — even if the merchant posted the first message. Presenting a
+  // (foreign/stale) token here is still rejected so one invoice's token can't read another's.
+  return !options.guestToken;
 }
 
 export interface MerchantWebhookSecret {
