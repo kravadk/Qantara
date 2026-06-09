@@ -196,7 +196,7 @@ export function SideDrawer({ isOpen, onClose, invoice }: { isOpen: boolean; onCl
                   </>
                 )}
 
-                {activeTab === 'chat' && <DealRoomPanel invoiceHash={invoice.hash} role="merchant" compact />}
+                {activeTab === 'chat' && <DealRoomPanel invoiceHash={invoice.hash} role="merchant" counterparty={invoice.recipient} compact />}
 
                 {activeTab === 'resolution' && (
                   <ResolutionCenter invoiceHash={invoice.hash} role="merchant" events={events} compact />

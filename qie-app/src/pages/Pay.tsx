@@ -932,7 +932,7 @@ export function Pay() {
                 <span className={`text-text-muted transition-transform ${chatOpen ? 'rotate-180' : ''}`}>▾</span>
               </button>
               {chatOpen && (
-                <DealRoomPanel invoiceHash={invoice.hash} role="payer" title="Ask merchant about this invoice" />
+                <DealRoomPanel invoiceHash={invoice.hash} role="payer" counterparty={invoice.merchant} title="Ask merchant about this invoice" />
               )}
             </div>
           </div>
