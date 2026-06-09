@@ -65,6 +65,20 @@ export const installmentPlanAbi = parseAbi([
   'event PlanCancelled(bytes32 indexed planId, uint256 refundedToPayer)',
 ]);
 
+/** BuyerEscrow.sol — single-release escrow with buyer-controlled release (buyer protection). */
+export const buyerEscrowAbi = parseAbi([
+  'struct Deal { address payer; address merchant; address token; address arbiter; uint256 amount; uint64 fundedAt; uint64 autoReleaseAt; uint8 status; }',
+  'function createEscrow(address merchant, address token, address arbiter, uint256 amount, uint64 autoReleaseSeconds, bytes32 salt) external payable returns (bytes32)',
+  'function computeDealId(address payer, address merchant, bytes32 salt) view returns (bytes32)',
+  'function confirmRelease(bytes32 dealId) external',
+  'function claimAfterTimeout(bytes32 dealId) external',
+  'function refund(bytes32 dealId) external',
+  'function getDeal(bytes32 dealId) view returns (Deal)',
+  'event DealFunded(bytes32 indexed dealId, address indexed payer, address indexed merchant, address token, address arbiter, uint256 amount, uint64 autoReleaseAt)',
+  'event DealReleased(bytes32 indexed dealId, address indexed by, uint256 amount)',
+  'event DealRefunded(bytes32 indexed dealId, address indexed by, uint256 amount)',
+]);
+
 /** Minimal ABI for RecurringScheduler.sol — prefunded subscription. */
 export const recurringSchedulerAbi = parseAbi([
   'struct Sub { address payer; address merchant; address token; uint256 amountPerPeriod; uint64 interval; uint32 totalPeriods; uint32 claimedPeriods; uint64 startedAt; uint8 status; }',

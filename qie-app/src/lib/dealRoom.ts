@@ -64,6 +64,10 @@ export const BATCH_PAYOUT_ADDRESS = import.meta.env.VITE_BATCH_PAYOUT_ADDRESS as
 export const INSTALLMENT_PLAN_ADDRESS =
   (import.meta.env.VITE_INSTALLMENT_PLAN_ADDRESS as `0x${string}` | undefined) ??
   '0x9F42070de1C7F545949A6259D22bBf253A34c374';
+/** BuyerEscrow (buyer-protection escrow) — live on QIE Mainnet; env override optional. */
+export const BUYER_ESCROW_ADDRESS =
+  (import.meta.env.VITE_BUYER_ESCROW_ADDRESS as `0x${string}` | undefined) ??
+  '0x789d193757cFd96fFb15d0baaF759560Dbcb21c9';
 
 const guestTokens = new Map<string, string>();
 const GUEST_TOKEN_STORAGE_PREFIX = 'qantara:guest-token:';
