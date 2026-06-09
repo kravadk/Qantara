@@ -223,7 +223,7 @@ export function AppSidebar({ onClose }: AppSidebarProps) {
         </SidebarSection>
 
         <SidebarSection label="Operations">
-          <SidebarItem icon={Shield} label="Advanced" path="/app/advanced" isActive={isAt('/app/advanced') || isAt('/app/escrow') || isAt('/app/subscription') || isAt('/app/batch') || isAt('/app/multipay')} badge="V1.5" badgeColor="bg-primary/15 text-primary" onNavigate={nav} />
+          <SidebarItem icon={Shield} label="Advanced" path="/app/advanced" isActive={isAt('/app/advanced') || isAt('/app/escrow') || isAt('/app/subscription') || isAt('/app/installment') || isAt('/app/batch') || isAt('/app/multipay')} badge="V1.5" badgeColor="bg-primary/15 text-primary" onNavigate={nav} />
           <SidebarItem icon={Webhook} label="Distribution" path="/app/distribute" isActive={isAt('/app/distribute') || isAt('/app/checkout-api') || isAt('/app/tg-bot') || isAt('/app/telegram-bot')} onNavigate={nav} />
           <SidebarItem icon={Webhook} label="Webhooks" path="/app/webhooks" isActive={isAt('/app/webhooks')} onNavigate={nav} />
         </SidebarSection>

@@ -31,6 +31,7 @@ const MultiPay = lazy(() => import('./pages/app/MultiPay').then(({ MultiPay }) =
 const Escrow = lazy(() => import('./pages/app/Escrow').then(({ Escrow }) => ({ default: Escrow })));
 const Subscription = lazy(() => import('./pages/app/Subscription').then(({ Subscription }) => ({ default: Subscription })));
 const BatchPayout = lazy(() => import('./pages/app/BatchPayout').then(({ BatchPayout }) => ({ default: BatchPayout })));
+const InstallmentPlan = lazy(() => import('./pages/app/InstallmentPlan').then(({ InstallmentPlan }) => ({ default: InstallmentPlan })));
 const Advanced = lazy(() => import('./pages/app/Advanced').then(({ Advanced }) => ({ default: Advanced })));
 const Distribution = lazy(() => import('./pages/app/Distribution').then(({ Distribution }) => ({ default: Distribution })));
 const Developer = lazy(() => import('./pages/app/Developer').then(({ Developer }) => ({ default: Developer })));
@@ -132,6 +133,7 @@ if (!env.ok && import.meta.env.PROD) {
               <Route path="multipay" element={<MultiPay />} />
               <Route path="escrow" element={<Escrow />} />
               <Route path="subscription" element={<Subscription />} />
+              <Route path="installment" element={<InstallmentPlan />} />
               <Route path="batch" element={<BatchPayout />} />
               <Route path="checkout-api" element={<CheckoutApi />} />
               <Route path="webhooks" element={<Webhooks />} />

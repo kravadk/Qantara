@@ -48,6 +48,23 @@ export const milestoneEscrowAbi = parseAbi([
   'event EscrowRefunded(bytes32 indexed escrowId, address indexed by, uint256 amount)',
 ]);
 
+/** InstallmentPlan.sol — pay-over-time (BNPL) plans. */
+export const installmentPlanAbi = parseAbi([
+  'struct Plan { address payer; address merchant; address token; uint256 amountPerInstallment; uint64 interval; uint32 totalInstallments; uint32 paidInstallments; uint32 claimedInstallments; uint64 createdAt; uint8 status; }',
+  'function createPlan(address merchant, address token, uint256 amountPerInstallment, uint64 interval, uint32 totalInstallments, bytes32 salt) external returns (bytes32)',
+  'function computePlanId(address payer, address merchant, bytes32 salt) view returns (bytes32)',
+  'function payInstallments(bytes32 planId, uint32 count) external payable',
+  'function claimInstallments(bytes32 planId) external',
+  'function cancelPlan(bytes32 planId) external',
+  'function getPlan(bytes32 planId) view returns (Plan)',
+  'function dueAt(bytes32 planId, uint32 n) view returns (uint64)',
+  'event PlanCreated(bytes32 indexed planId, address indexed payer, address indexed merchant, address token, uint256 amountPerInstallment, uint64 interval, uint32 totalInstallments)',
+  'event InstallmentsPaid(bytes32 indexed planId, uint32 paidInstallments, uint256 amount)',
+  'event InstallmentsClaimed(bytes32 indexed planId, uint32 claimedInstallments, uint256 amount)',
+  'event PlanCompleted(bytes32 indexed planId)',
+  'event PlanCancelled(bytes32 indexed planId, uint256 refundedToPayer)',
+]);
+
 /** Minimal ABI for RecurringScheduler.sol — prefunded subscription. */
 export const recurringSchedulerAbi = parseAbi([
   'struct Sub { address payer; address merchant; address token; uint256 amountPerPeriod; uint64 interval; uint32 totalPeriods; uint32 claimedPeriods; uint64 startedAt; uint8 status; }',

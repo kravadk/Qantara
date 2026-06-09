@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Shield, Repeat, Users2, Users } from 'lucide-react';
+import { Shield, Repeat, Users2, Users, CalendarClock } from 'lucide-react';
 import { Escrow } from './Escrow';
 import { Subscription } from './Subscription';
 import { BatchPayout } from './BatchPayout';
 import { MultiPay } from './MultiPay';
+import { InstallmentPlan } from './InstallmentPlan';
 
-type Tab = 'escrow' | 'subscription' | 'batch' | 'multipay';
+type Tab = 'escrow' | 'subscription' | 'installment' | 'batch' | 'multipay';
 
 const TABS: { id: Tab; label: string; icon: typeof Shield; description: string }[] = [
   { id: 'escrow', label: 'Milestone Escrow', icon: Shield, description: '4-tier escrow with optional arbiter' },
   { id: 'subscription', label: 'Subscription', icon: Repeat, description: 'Prefunded recurring payments' },
+  { id: 'installment', label: 'Installment Plan', icon: CalendarClock, description: 'Pay over time (BNPL), refundable' },
   { id: 'batch', label: 'Batch Payout', icon: Users2, description: 'CSV-driven payroll, pull claims' },
   { id: 'multipay', label: 'Collective Invoice', icon: Users, description: 'Multiple payers contribute' },
 ];
@@ -65,6 +67,7 @@ export function Advanced() {
       <div>
         {tab === 'escrow' && <Escrow />}
         {tab === 'subscription' && <Subscription />}
+        {tab === 'installment' && <InstallmentPlan />}
         {tab === 'batch' && <BatchPayout />}
         {tab === 'multipay' && <MultiPay />}
       </div>
