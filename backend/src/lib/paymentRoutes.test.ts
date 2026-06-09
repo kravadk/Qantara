@@ -8,7 +8,7 @@ function chainTxHash(seed: number): `0x${string}` {
   return `0x${seed.toString(16).padStart(64, '0')}`;
 }
 
-test('buildPaymentRoutePlan recommends native QIE transfer for an open QIE invoice', async () => {
+test('buildPaymentRoutePlan recommends the Qantara contract route for an open QIE invoice when configured', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'qantara-routes-'));
   process.env.QANTARA_DB_PATH = join(dir, 'test.sqlite');
   const previousQantara = process.env.QANTARA_ADDRESS;
@@ -30,8 +30,9 @@ test('buildPaymentRoutePlan recommends native QIE transfer for an open QIE invoi
     const plan = await buildPaymentRoutePlan(invoice);
     assert.equal(plan.state, 'ready');
     assert.equal(plan.payable, true);
-    assert.equal(plan.recommendedRouteId, 'qie.direct_transfer');
+    assert.equal(plan.recommendedRouteId, 'qie.qantara_invoice');
     assert.ok(plan.routes.some((route) => route.id === 'qie.qantara_invoice'));
+    assert.ok(plan.routes.some((route) => route.id === 'qie.direct_transfer')); // direct stays as fallback
     assert.equal(plan.requiresRealTx, true);
     assert.ok(plan.acquisitionRoutes.some((route) => route.id === 'qie.wallet'));
     assert.deepEqual(plan.dataSources, ['sqlite.invoice', 'backend.rails', 'qie.rpc.health', 'deployment.registry']);

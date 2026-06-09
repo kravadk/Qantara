@@ -158,7 +158,9 @@ export async function buildPaymentRoutePlan(inv: store.Invoice): Promise<Payment
       method: 'native-transfer',
       label: 'Native QIE direct transfer',
       state: direct.state,
-      recommended: direct.state === 'ready',
+      // Direct wallet->merchant transfer is the fallback; the contract route is
+      // preferred when configured so each payment emits a verifiable InvoicePaid event.
+      recommended: false,
       reason: direct.reason,
       token: { symbol: 'QIE', address: ZERO_ADDRESS, decimals: 18 },
       settlementContract: null,
@@ -175,7 +177,9 @@ export async function buildPaymentRoutePlan(inv: store.Invoice): Promise<Payment
       method: 'contract-pay-invoice-native',
       label: 'Qantara contract invoice payment',
       state: contractFlow.state,
-      recommended: false,
+      // Preferred default when QANTARA_ADDRESS is configured: settles through the
+      // Qantara contract and emits InvoicePaid (verifiable reference, on-chain lifecycle).
+      recommended: contractFlow.state === 'ready',
       reason: contractFlow.reason,
       token: { symbol: 'QIE', address: ZERO_ADDRESS, decimals: 18 },
       settlementContract: qieRail?.contractAddress ?? null,
