@@ -2,7 +2,7 @@
 import {
   LayoutDashboard, Plus,
   Settings, Code, ChevronDown, Copy, Inbox,
-  LogOut, X, Webhook, Shield, KeyRound, BarChart3, Wallet,
+  LogOut, X, Webhook, Shield, KeyRound, BarChart3, Wallet, Compass,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useCallback } from 'react';
@@ -229,7 +229,8 @@ export function AppSidebar({ onClose }: AppSidebarProps) {
         </SidebarSection>
 
         <SidebarSection label="Resources" defaultOpen={false}>
-          <SidebarItem icon={Code} label="Developer" path="/app/developer" isActive={isAt('/app/developer') || isAt('/app/build') || isAt('/app/guide') || isAt('/app/explorer')} onNavigate={nav} />
+          <SidebarItem icon={Code} label="Developer" path="/app/developer" isActive={isAt('/app/developer') || isAt('/app/build') || isAt('/app/guide')} onNavigate={nav} />
+          <SidebarItem icon={Compass} label="Explorer" path="/app/explorer" isActive={isAt('/app/explorer')} onNavigate={nav} />
           <SidebarItem icon={KeyRound} label="API keys" path="/app/api-keys" isActive={isAt('/app/api-keys')} onNavigate={nav} />
           <SidebarItem icon={BarChart3} label="Billing" path="/app/billing" isActive={isAt('/app/billing')} onNavigate={nav} />
           <SidebarItem icon={Inbox} label="Customers" path="/app/customers" isActive={isAt('/app/customers')} onNavigate={nav} />
