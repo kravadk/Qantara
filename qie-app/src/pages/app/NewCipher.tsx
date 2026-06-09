@@ -707,7 +707,10 @@ export function NewCipher() {
                 <QRDisplay value={shareWebUrl} eip681={shareEip681} qantara={shareQantara} size={160} />
                 <p className="text-xs text-text-dim">Scan to open payment page or hand off to a wallet</p>
               </div>
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-4">
+                <Button variant="outline" onClick={() => deployedHash && window.open(`/pay/${deployedHash}`, '_blank', 'noopener')} className="gap-2">
+                  Preview checkout
+                </Button>
                 <Button variant="outline" onClick={() => navigate('/app/dashboard')} className="gap-2">
                   Go to Dashboard <ArrowRight className="w-4 h-4" />
                 </Button>
