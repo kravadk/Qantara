@@ -1,9 +1,10 @@
-import { Clock, MessageSquare, RefreshCw, Send, ShieldQuestion } from 'lucide-react';
+import { Clock, MessageSquare, RefreshCw, Send, ShieldCheck, ShieldQuestion } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from './Button';
 import { useDealRoom } from '../hooks/useDealRoom';
 import type { DealSenderRole } from '../lib/dealRoom';
 import { ResolutionCenter } from './ResolutionCenter';
+import { useSiweAuth } from '../lib/auth';
 
 const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
 
@@ -20,6 +21,10 @@ export function DealRoomPanel({
 }) {
   const { messages, events, isLoading, isSending, error, streamStatus, sendMessage, refresh } = useDealRoom(invoiceHash, role);
   const [draft, setDraft] = useState('');
+  const { isAuthenticated, login, status: authStatus } = useSiweAuth();
+  // Merchant chat/resolution is authenticated by a SIWE session (a connected wallet is not
+  // enough). Payers post with a per-invoice guest token, so only the merchant side needs this.
+  const needsSignIn = role === 'merchant' && !isAuthenticated;
 
   const submit = async () => {
     const body = draft.trim();
@@ -91,35 +96,51 @@ export function DealRoomPanel({
       {error && <div className="px-4 pb-2 text-xs text-red-300">{error}</div>}
 
       <div className="border-t border-border-default p-3 space-y-3">
-        <div className="flex gap-2">
-          <textarea
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                void submit();
-              }
-            }}
-            maxLength={1000}
-            rows={compact ? 2 : 3}
-            aria-label={role === 'merchant' ? 'Reply to payer' : 'Ask merchant about this invoice'}
-            placeholder={role === 'merchant' ? 'Reply to payer...' : 'Ask merchant about this invoice...'}
-            className="min-h-11 flex-1 resize-none rounded-xl border border-border-default bg-surface-2 px-3 py-2 text-sm text-white placeholder:text-text-muted focus:border-primary focus:outline-none"
-          />
-          <Button
-            size="sm"
-            className="self-end px-3"
-            loading={isSending}
-            disabled={!draft.trim()}
-            onClick={() => void submit()}
-            aria-label="Send deal room message"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
+        {needsSignIn ? (
+          <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3 text-center space-y-2">
+            <p className="text-xs text-text-muted">Sign in with your merchant wallet to reply and resolve this invoice. Connecting a wallet alone isn't enough.</p>
+            <Button
+              size="sm"
+              className="gap-2"
+              loading={authStatus === 'signing' || authStatus === 'verifying'}
+              onClick={() => void login()}
+            >
+              <ShieldCheck className="h-4 w-4" /> Sign in with wallet
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="flex gap-2">
+              <textarea
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    void submit();
+                  }
+                }}
+                maxLength={1000}
+                rows={compact ? 2 : 3}
+                aria-label={role === 'merchant' ? 'Reply to payer' : 'Ask merchant about this invoice'}
+                placeholder={role === 'merchant' ? 'Reply to payer...' : 'Ask merchant about this invoice...'}
+                className="min-h-11 flex-1 resize-none rounded-xl border border-border-default bg-surface-2 px-3 py-2 text-sm text-white placeholder:text-text-muted focus:border-primary focus:outline-none"
+              />
+              <Button
+                size="sm"
+                className="self-end px-3"
+                loading={isSending}
+                disabled={!draft.trim()}
+                onClick={() => void submit()}
+                aria-label="Send deal room message"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
 
-        <ResolutionCenter invoiceHash={invoiceHash} role={role} events={events} onResolved={refresh} compact={compact} />
+            <ResolutionCenter invoiceHash={invoiceHash} role={role} events={events} onResolved={refresh} compact={compact} />
+          </>
+        )}
       </div>
     </div>
   );
