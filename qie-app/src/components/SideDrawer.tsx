@@ -29,6 +29,16 @@ export function SideDrawer({ isOpen, onClose, invoice }: { isOpen: boolean; onCl
   const [retryingDeliveryId, setRetryingDeliveryId] = useState<string | null>(null);
   const { events, unreadCount } = useDealRoom(invoice?.hash, 'merchant');
 
+  // Explorer link should open the on-chain transaction (paid receipt or indexed chain event),
+  // not a block. Falls back to the merchant address page when no tx hash is known yet.
+  const explorerBase = qieMainnet.blockExplorers.default.url;
+  const explorerTxHash = receipt?.txHash ?? chainEvents.find((event) => event.txHash)?.txHash ?? null;
+  const explorerHref = explorerTxHash
+    ? `${explorerBase}/tx/${explorerTxHash}`
+    : invoice?.seller
+      ? `${explorerBase}/address/${invoice.seller}`
+      : explorerBase;
+
   useEffect(() => {
     if (!invoice?.hash) {
       setReceipt(null);
@@ -177,10 +187,10 @@ export function SideDrawer({ isOpen, onClose, invoice }: { isOpen: boolean; onCl
                     </div>
 
                     <div className="flex items-center justify-between px-1 text-xs text-text-dim">
-                      <span>Block #{invoice.blockNumber}</span>
-                      <a href={`${qieMainnet.blockExplorers.default.url}/block/${invoice.blockNumber}`} target="_blank" rel="noopener noreferrer"
+                      <span>{explorerTxHash ? 'On-chain transaction' : 'On-chain proof'}</span>
+                      <a href={explorerHref} target="_blank" rel="noopener noreferrer"
                         className="flex items-center gap-1 transition-colors hover:text-primary">
-                        Explorer <ExternalLink className="h-2.5 w-2.5" />
+                        {explorerTxHash ? 'Transaction' : 'Explorer'} <ExternalLink className="h-2.5 w-2.5" />
                       </a>
                     </div>
                   </>
@@ -301,10 +311,10 @@ export function SideDrawer({ isOpen, onClose, invoice }: { isOpen: boolean; onCl
                     <Link2 className="h-4 w-4 text-text-muted group-hover:text-primary" />
                     <span className="text-sm text-text-secondary group-hover:text-white">Copy Payment Link</span>
                   </button>
-                  <a href={`${qieMainnet.blockExplorers.default.url}/block/${invoice.blockNumber}`} target="_blank" rel="noopener noreferrer"
+                  <a href={explorerHref} target="_blank" rel="noopener noreferrer"
                     className="group flex w-full items-center gap-3 rounded-xl border border-border-default bg-surface-2 p-3.5 transition-colors hover:border-primary/30">
                     <ExternalLink className="h-4 w-4 text-text-muted group-hover:text-primary" />
-                    <span className="text-sm text-text-secondary group-hover:text-white">View on Explorer</span>
+                    <span className="text-sm text-text-secondary group-hover:text-white">{explorerTxHash ? 'View transaction on Explorer' : 'View on Explorer'}</span>
                   </a>
                   {invoice.status === 'open' && (
                     <a href={`/pay/${invoice.hash}`}
