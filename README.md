@@ -104,6 +104,20 @@ The API/data layers are split into focused modules behind backwards-compatible b
 | QantaraSubscriptionV2 | [`0x30ACe939BD62b6a9E9aF3f5AB4287b5FB5F39c06`](https://mainnet.qie.digital/address/0x30ACe939BD62b6a9E9aF3f5AB4287b5FB5F39c06) | Subscription payments |
 | QantaraGasRelay | [`0xE027abFb3F845c6798fA247f1053Bd1B143768d2`](https://mainnet.qie.digital/address/0xE027abFb3F845c6798fA247f1053Bd1B143768d2) | EIP-712 meta-tx forwarder (gasless). On-chain EIP-712 domain name is the legacy `PayLinkGasRelay`; signers read it from `eip712Domain()`. |
 | QantaraChat2771 | [`0xE403F19b533A3fe198835C872Cc11a11cd4bdA75`](https://mainnet.qie.digital/address/0xE403F19b533A3fe198835C872Cc11a11cd4bdA75) | ERC-2771 gasless chat target — relay-sponsored messages stay attributed on-chain to the signer |
+| InstallmentPlan | [`0x9F42070de1C7F545949A6259D22bBf253A34c374`](https://mainnet.qie.digital/address/0x9F42070de1C7F545949A6259D22bBf253A34c374) | Pay-over-time (BNPL): payer pays installments on a schedule, merchant claims paid ones, payer-cancellable with refund of unclaimed |
+| BuyerEscrow | [`0x789d193757cFd96fFb15d0baaF759560Dbcb21c9`](https://mainnet.qie.digital/address/0x789d193757cFd96fFb15d0baaF759560Dbcb21c9) | Buyer-protection escrow: funds held until the buyer confirms release; merchant claim after timeout; optional arbiter |
+
+### Settlement model
+
+Native QIE invoices settle **through the Qantara contract by default** (`payInvoiceNative`,
+emitting `InvoicePaid`) when `QANTARA_ADDRESS` is configured — a verifiable on-chain reference
+and lifecycle, the same pattern proven on-chain invoicing relies on. A plain wallet→merchant
+**direct transfer remains a fallback** route. Custody is opt-in, not forced on every payment:
+simple invoices stay pass-through, while **MilestoneEscrow / BuyerEscrow** (custody until
+release), **InstallmentPlan** (pay-over-time), **RecurringScheduler / QantaraSubscriptionV2**
+(streaming) and **QantaraMultiPay / BatchPayout / QantaraSplits** hold or distribute funds only
+where the use-case needs it. Contracts never hold gas — the caller always pays gas; only the
+optional `QantaraGasRelay` relayer wallet is funded (for sponsored, gasless actions).
 
 QUSDC is enabled only when a production token address is configured and passes preflight. The example address currently points to a token whose metadata includes a non-production label, so it is intentionally rejected by production preflight. Product reference: [QUSDC Stable](https://www.stable.qie.digital/) and [QUSDC Docs](https://docs.stable.qie.digital/).
 
