@@ -573,6 +573,14 @@ router.post('/:hash/verify-payment', async (req: Request, res: Response) => {
   if (!tx_hash || !/^0x[a-fA-F0-9]{64}$/.test(tx_hash)) {
     return res.status(400).json({ error: 'bad_request', message: 'tx_hash required (0x...64 hex)' });
   }
+  // Already paid: never accept a second payment for the same invoice.
+  if (inv.status === store.InvoiceStatus.Paid) {
+    return res.status(409).json({ error: 'already_paid', message: 'This invoice has already been paid.' });
+  }
+  // The merchant cannot pay their own invoice.
+  if (payer.toLowerCase() === inv.merchant.toLowerCase()) {
+    return res.status(400).json({ error: 'self_payment', message: 'The merchant cannot pay their own invoice.' });
+  }
 
   try {
     const isNative = inv.token.toLowerCase() === '0x0000000000000000000000000000000000000000';
@@ -657,6 +665,12 @@ router.post('/:hash/paid', requireApiKey, async (req: Request, res: Response) =>
   }
   if (!tx_hash || !/^0x[a-fA-F0-9]{64}$/.test(tx_hash)) {
     return res.status(400).json({ error: 'bad_request', message: 'tx_hash required (0x…64 hex)' });
+  }
+  if (inv.status === store.InvoiceStatus.Paid) {
+    return res.status(409).json({ error: 'already_paid', message: 'This invoice has already been paid.' });
+  }
+  if (payer.toLowerCase() === inv.merchant.toLowerCase()) {
+    return res.status(400).json({ error: 'self_payment', message: 'The merchant cannot pay their own invoice.' });
   }
 
   try {

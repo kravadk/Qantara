@@ -74,6 +74,9 @@ export function Pay() {
   const [qrOpen, setQrOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [routePlan, setRoutePlan] = useState<PaymentRoutePlan | null>(null);
+  // A merchant cannot pay their own invoice — block it when the connected wallet is the
+  // invoice merchant. (Re-payment is already impossible: the contract requires status Created.)
+  const isMerchantViewer = !!(address && invoice && address.toLowerCase() === invoice.merchant.toLowerCase());
   const [routePlanError, setRoutePlanError] = useState<string | null>(null);
   const [routePlanLoading, setRoutePlanLoading] = useState(false);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
@@ -278,6 +281,10 @@ export function Pay() {
 
   const handlePay = async () => {
     if (!invoice || !hash) return;
+    if (isMerchantViewer) {
+      addToast('error', "You can't pay your own invoice — share the link with a payer.");
+      return;
+    }
     const selectedRoute = routePlan?.routes.find((route) => route.id === selectedRouteId) ?? null;
     if (routePlanLoading) {
       setPayError('Payment routes are still loading. Wait for the backend route planner.');
@@ -851,6 +858,13 @@ export function Pay() {
                   </Button>
                 )}
               </div>
+            ) : isMerchantViewer ? (
+              <CheckoutAlert
+                icon={<XCircle className="h-5 w-5" />}
+                title="You can't pay your own invoice"
+                tone="warning"
+                body="This invoice belongs to your connected wallet. Share the payment link with a payer to get paid."
+              />
             ) : !isConnected && !selectedRouteIsExternal ? (
               <Button size="lg" className="w-full" onClick={() => setIsWalletModalOpen(true)}>Connect wallet to pay</Button>
             ) : routePlanBlocksPayment || routePlanError || !selectedRoute ? (

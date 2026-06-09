@@ -834,9 +834,9 @@ test('payment routes plan QIE and QUSDC actions from persisted invoices and rail
     assert.equal(qieRoutes.body.state, 'ready');
     assert.equal(qieRoutes.body.payable, true);
     assert.equal(qieRoutes.body.token.symbol, 'QIE');
-    assert.equal(qieRoutes.body.recommendedRouteId, 'qie.direct_transfer');
-    assert.ok(qieRoutes.body.routes.some((route: any) => route.id === 'qie.direct_transfer' && route.recommended === true));
-    assert.ok(qieRoutes.body.routes.some((route: any) => route.id === 'qie.qantara_invoice'));
+    assert.equal(qieRoutes.body.recommendedRouteId, 'qie.qantara_invoice');
+    assert.ok(qieRoutes.body.routes.some((route: any) => route.id === 'qie.qantara_invoice' && route.recommended === true));
+    assert.ok(qieRoutes.body.routes.some((route: any) => route.id === 'qie.direct_transfer'));
     assert.equal(qieRoutes.body.requiresRealTx, true);
     assert.ok(qieRoutes.body.acquisitionRoutes.some((route: any) => route.id === 'qie.bridge' && route.requiresRealTx === true));
     assert.deepEqual(qieRoutes.body.dataSources, ['sqlite.invoice', 'backend.rails', 'qie.rpc.health', 'deployment.registry']);
