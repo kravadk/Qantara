@@ -74,9 +74,6 @@ export function Pay() {
   const [qrOpen, setQrOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [routePlan, setRoutePlan] = useState<PaymentRoutePlan | null>(null);
-  // The merchant (creator) previewing their own invoice doesn't chat with themselves before
-  // payment — hide the pre-payment "Ask merchant" prompts when the viewer is the merchant.
-  const isMerchantViewer = !!(address && invoice && address.toLowerCase() === invoice.merchant.toLowerCase());
   const [routePlanError, setRoutePlanError] = useState<string | null>(null);
   const [routePlanLoading, setRoutePlanLoading] = useState(false);
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
@@ -870,7 +867,7 @@ export function Pay() {
               </Button>
             )}
 
-            {canPay && !isMerchantViewer && (
+            {canPay && (
               <button
                 type="button"
                 onClick={() => { setChatOpen(true); setTimeout(scrollToDealRoom, 60); }}
@@ -925,21 +922,19 @@ export function Pay() {
               onShare={() => void handleShareLink()}
             />
 
-            {!isMerchantViewer && (
-              <div id="deal-room" ref={dealRoomRef} className="scroll-mt-6 space-y-3">
-                <button
-                  type="button"
-                  onClick={() => setChatOpen((o) => !o)}
-                  className="flex w-full items-center justify-between gap-2 rounded-2xl border border-border-default bg-surface-1/60 px-4 py-3 text-sm font-bold text-text-secondary transition-colors hover:text-white"
-                >
-                  <span className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Ask merchant · chat &amp; resolution</span>
-                  <span className={`text-text-muted transition-transform ${chatOpen ? 'rotate-180' : ''}`}>▾</span>
-                </button>
-                {chatOpen && (
-                  <DealRoomPanel invoiceHash={invoice.hash} role="payer" counterparty={invoice.merchant} title="Ask merchant about this invoice" />
-                )}
-              </div>
-            )}
+            <div id="deal-room" ref={dealRoomRef} className="scroll-mt-6 space-y-3">
+              <button
+                type="button"
+                onClick={() => setChatOpen((o) => !o)}
+                className="flex w-full items-center justify-between gap-2 rounded-2xl border border-border-default bg-surface-1/60 px-4 py-3 text-sm font-bold text-text-secondary transition-colors hover:text-white"
+              >
+                <span className="flex items-center gap-2"><MessageSquare className="h-4 w-4 text-primary" /> Ask merchant · chat &amp; resolution</span>
+                <span className={`text-text-muted transition-transform ${chatOpen ? 'rotate-180' : ''}`}>▾</span>
+              </button>
+              {chatOpen && (
+                <DealRoomPanel invoiceHash={invoice.hash} role="payer" counterparty={invoice.merchant} title="Ask merchant about this invoice" />
+              )}
+            </div>
           </div>
         </div>
 
