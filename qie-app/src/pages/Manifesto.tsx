@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { MetricPill, ProofRail, PublicCtaRow, PublicFooter, Reveal, SectionHeading } from '../components/public/PublicMotion';
 import { formatPublicMetric, usePublicSignals } from '../components/public/usePublicSignals';
+import { Atmosphere } from '../components/public/landing/parts';
 
 const principles = [
   {
@@ -46,8 +47,8 @@ export function Manifesto() {
   const activeRails = signals.rails?.rails.filter((rail) => rail.status === 'active').length;
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-bg-base text-white">
-      <div className="qie-mesh-bg pointer-events-none absolute inset-0 opacity-70" />
+    <div className="relative min-h-screen overflow-hidden bg-bg-base font-body text-white">
+      <Atmosphere />
 
       <section className="relative mx-auto max-w-7xl px-4 py-24 md:py-32">
         <Reveal className="max-w-5xl">
@@ -55,7 +56,7 @@ export function Manifesto() {
             <Radio className="h-3.5 w-3.5" />
             Qantara trust model
           </div>
-          <h1 className="text-5xl font-black leading-[0.98] tracking-tight text-white md:text-7xl xl:text-8xl">
+          <h1 className="font-display text-5xl font-black leading-[0.98] tracking-tight text-white text-glow md:text-7xl xl:text-8xl">
             Payment software should not invent payment truth.
           </h1>
           <p className="mt-7 max-w-3xl text-base leading-7 text-text-secondary md:text-lg">
@@ -147,7 +148,7 @@ export function Manifesto() {
       <section className="relative mx-auto max-w-5xl px-4 py-24 text-center">
         <Reveal>
           <FileCheck2 className="mx-auto mb-5 h-10 w-10 text-primary" />
-          <h2 className="text-4xl font-black tracking-tight text-white md:text-6xl">
+          <h2 className="font-display text-4xl font-black tracking-tight text-white text-glow md:text-6xl">
             A better checkout is an audit trail users can understand.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-text-secondary">

@@ -3,7 +3,7 @@ import { AnimatePresence, motion, useReducedMotion, useScroll, useTransform } fr
 import { ArrowRight, BadgeCheck, Bot, CheckCircle2, Code2, FileCheck2, Globe2, MessageSquareText, Radio, ReceiptText, Route, Send, ShieldCheck, Wallet, Webhook, type LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/Button';
-import { HexGrid } from '../components/HexGrid';
+import { Atmosphere } from '../components/public/landing/parts';
 import { ProofRail, PublicCtaRow, PublicFooter, Reveal, SectionHeading } from '../components/public/PublicMotion';
 import { usePublicSignals } from '../components/public/usePublicSignals';
 
@@ -135,9 +135,8 @@ export function Showcase() {
   const signals = usePublicSignals();
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-bg-base text-white">
-      <div className="qie-mesh-bg pointer-events-none absolute inset-0 opacity-70" />
-      <HexGrid />
+    <div className="relative min-h-screen overflow-hidden bg-bg-base font-body text-white">
+      <Atmosphere />
       <motion.div style={{ y }} className="pointer-events-none absolute right-[8%] top-32 h-[520px] w-[520px] rounded-full bg-primary/10 blur-[150px]" />
 
       <section className="relative mx-auto flex min-h-[92vh] max-w-7xl flex-col justify-center px-4 py-24">
@@ -146,7 +145,7 @@ export function Showcase() {
             <Radio className="h-3.5 w-3.5" />
             Visual product tour
           </div>
-          <h1 className="text-5xl font-black leading-[0.98] tracking-tight text-white md:text-7xl xl:text-8xl">
+          <h1 className="font-display text-5xl font-black leading-[0.98] tracking-tight text-white text-glow md:text-7xl xl:text-8xl">
             The payment room behind every Qantara link.
           </h1>
           <p className="mt-6 max-w-3xl text-base leading-7 text-text-secondary md:text-lg">

@@ -4,6 +4,7 @@ import { Button } from '../components/Button';
 import { QANTARA_BACKEND_URL } from '../lib/dealRoom';
 import { getBackendHealth, type BackendHealth } from '../lib/qantaraApi';
 import { useSeo } from '../lib/useSeo';
+import { Atmosphere } from '../components/public/landing/parts';
 
 type ReadyState = {
   ready: boolean;
@@ -63,12 +64,13 @@ export function Status() {
         : 'Degraded';
 
   return (
-    <main className="min-h-screen px-6 pb-20 pt-14 text-white">
-      <section className="mx-auto max-w-6xl">
+    <main className="relative min-h-screen overflow-hidden px-6 pb-20 pt-14 font-body text-white">
+      <Atmosphere />
+      <section className="relative mx-auto max-w-6xl">
         <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.28em] text-primary">System status</p>
-            <h1 className="mt-3 text-4xl font-black tracking-tight md:text-6xl">Qantara status</h1>
+            <h1 className="mt-3 font-display text-4xl font-black tracking-tight text-glow md:text-6xl">Qantara status</h1>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-text-secondary md:text-base">
               Live operational checks from the configured backend. Payment status, receipts, and wallet balances are never simulated here.
             </p>
