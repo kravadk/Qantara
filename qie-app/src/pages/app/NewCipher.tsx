@@ -49,6 +49,7 @@ const INVOICE_TEMPLATES: Array<{
   token: 'QIE' | 'QUSDC';
   memo: string;
   noDeadline: boolean;
+  deadlineDays?: number;
 }> = [
   {
     id: 'service-retainer',
@@ -59,20 +60,33 @@ const INVOICE_TEMPLATES: Array<{
     token: 'QIE',
     memo: 'Service retainer',
     noDeadline: false,
+    deadlineDays: 7,
   },
   {
     id: 'digital-product',
     label: 'Digital product',
-    description: 'Checkout-ready invoice for a fixed product sale.',
+    description: 'Checkout-ready invoice for a fixed product sale, 30-day window.',
     type: 'standard',
     amount: '10',
     token: 'QIE',
     memo: 'Digital product purchase',
     noDeadline: false,
+    deadlineDays: 30,
+  },
+  {
+    id: 'one-off',
+    label: 'Invoice (one-off)',
+    description: 'Quick one-time invoice with a short 3-day window.',
+    type: 'standard',
+    amount: '1',
+    token: 'QIE',
+    memo: 'Invoice',
+    noDeadline: false,
+    deadlineDays: 3,
   },
   {
     id: 'community-donation',
-    label: 'Community donation',
+    label: 'Donation / Tip jar',
     description: 'Open-ended donation link with no expiry.',
     type: 'donation',
     amount: '0',
@@ -308,7 +322,7 @@ export function NewCipher() {
     if (!template) return;
     const deadline = template.noDeadline
       ? ''
-      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      : new Date(Date.now() + (template.deadlineDays ?? 7) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     setSelectedTemplate(template.id);
     setType(template.type);
     setDefaultToken(template.token);
